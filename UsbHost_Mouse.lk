@@ -1,0 +1,23 @@
+-muwx
+-i UsbHost_Mouse.ihx
+-M
+-Y
+-X 0x0380
+-C 0x3800
+-b HOME = 0x0000
+-b XSEG = 0x0080
+-b PSEG = 0x0080
+-b ISEG = 0x0000
+-b BSEG = 0x0000
+-k /usr/bin/../share/sdcc/lib/small
+-k /usr/share/sdcc/lib/small
+-l mcs51
+-l libsdcc
+-l libint
+-l liblong
+-l libfloat
+UsbHost_Mouse.rel
+usbhost.rel
+debug.rel
+
+-e

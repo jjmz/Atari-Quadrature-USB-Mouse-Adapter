@@ -1,0 +1,14 @@
+0x12,        // bLength
+0x01,        // bDescriptorType (Device)
+0x00, 0x02,  // bcdUSB 2.00
+0x00,        // bDeviceClass (Use class information in the Interface Descriptors)
+0x00,        // bDeviceSubClass 
+0x00,        // bDeviceProtocol 
+0x08,        // bMaxPacketSize0 8
+0x6D, 0x04,  // idVendor 0x046D
+0x16, 0xC0,  // idProduct 0xC016
+0x40, 0x03,  // bcdDevice 6.40
+0x01,        // iManufacturer (String Index)
+0x02,        // iProduct (String Index)
+0x00,        // iSerialNumber (String Index)
+0x01,        // bNumConfigurations 1
