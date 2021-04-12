@@ -1,5 +1,3 @@
-
-
 // 各子程序返回状态码
 #define ERR_SUCCESS         0x00    // 操作成功
 #define ERR_USB_CONNECT     0x15    /* 检测到USB设备连接事件,已经连接 */
@@ -18,6 +16,7 @@
 #define ROOT_DEV_SUCCESS     3
 #define DEV_TYPE_KEYBOARD   ( USB_DEV_CLASS_HID | 0x20 )
 #define DEV_TYPE_MOUSE      ( USB_DEV_CLASS_HID | 0x30 )
+#define DEV_TYPE_JOYSTICK   ( USB_DEV_CLASS_HID | 0x40 )
 #define DEF_AOA_DEVICE       0xF0
 
 

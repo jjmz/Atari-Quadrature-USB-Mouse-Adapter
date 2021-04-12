@@ -1,0 +1,23 @@
+{
+  "build": {
+    "f_cpu": "16000000",
+    "size_iram": 256,
+    "size_xram": 896,
+    "size_code": 14336,
+    "size_heap": 64,
+    "mcu": "wch554",
+    "cpu": "mcs51"
+  },
+  "frameworks": [],
+  "upload": {
+    "maximum_ram_size": 256,
+    "maximum_size": 16384,
+    "protocol": "custom",
+    "protocols": [
+      "custom"
+    ]
+  },
+  "name": "Generic CH554 Board",
+  "url": "https://www.wch-ic.com",
+  "vendor": "WCH"
+}
