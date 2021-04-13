@@ -46,26 +46,26 @@ uint8_t   AnalyzeRootHub( void )
 { 
 	uint8_t	s;
 	s = ERR_SUCCESS;
-	if ( USB_MIS_ST & bUMS_DEV_ATTACH ) {                                        // 设备存在
-		if ( ThisUsbDev.DeviceStatus == ROOT_DEV_DISCONNECT                        // 检测到有设备插入
-			|| ( UHOST_CTRL & bUH_PORT_EN ) == 0x00 ) {                              // 检测到有设备插入,但尚未允许,说明是刚插入
-			DisableRootHubPort( );                                                   // 关闭端口
+	if ( USB_MIS_ST & bUMS_DEV_ATTACH ) {                                        // Device exists
+		if ( ThisUsbDev.DeviceStatus == ROOT_DEV_DISCONNECT                        // Device plugged in
+			|| ( UHOST_CTRL & bUH_PORT_EN ) == 0x00 ) {                              //A device is detected to be plugged in, but it has not been allowed, indicating that it has just been plugged in
+			DisableRootHubPort( );                                                   // Close the port
 //		ThisUsbDev.DeviceSpeed = USB_HUB_ST & bUHS_DM_LEVEL ? 0 : 1;
-			ThisUsbDev.DeviceStatus = ROOT_DEV_CONNECTED;                            //置连接标志
+			ThisUsbDev.DeviceStatus = ROOT_DEV_CONNECTED;                            //Set the connection flag
 #if DE_PRINTF
 			printstr( "USB dev in\n" );
 #endif
 			s = ERR_USB_CONNECT;
 		}
 	}
-	else if ( ThisUsbDev.DeviceStatus >= ROOT_DEV_CONNECTED ) {                  //检测到设备拔出
-		DisableRootHubPort( );                                                     // 关闭端口
+	else if ( ThisUsbDev.DeviceStatus >= ROOT_DEV_CONNECTED ) {                  //Device unplug detected
+		DisableRootHubPort( );                                                     // Close the port
 #if DE_PRINTF		
 		printstr( "USB dev out\n" );
 #endif
 		if ( s == ERR_SUCCESS ) s = ERR_USB_DISCON;
 	}
-//	UIF_DETECT = 0;                                                            // 清中断标志
+//	UIF_DETECT = 0;                                                            // Clear interrupt flag
 	return( s );
 }
 /*******************************************************************************

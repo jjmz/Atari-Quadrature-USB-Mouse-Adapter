@@ -38,8 +38,8 @@ __xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];
 __bit FoundNewDev;
 
 typedef struct  {
-	uint8_t xcnt,ycnt;		//2
-	int16_t xdelta,ydelta;	//4
+	uint8_t  xcnt,ycnt;		//2
+	int16_t  xdelta,ydelta;	//4
 	uint16_t xval,yval;		//4
 	uint8_t xph,yph;		//2
 	uint8_t sdiv,smul;		//2
@@ -129,8 +129,10 @@ uint8_t ReadData(uint8_t addr)
 	return ROM_DATA_L;
 }
 
-#if 1
-__code uint8_t  DefaultConfig[]= { 0x03,0x02,0x0A,0x40,			//Mouse Params
+//#define DEFAULT_CONFIG
+
+#ifdef DEFAULT_CONFIG
+__code uint8_t  DefaultConfig[]= { 0x02,0x04,0x08,0x20,			//Mouse Params
                                    0x0F,0x00,0x00,0x00,0x00,	//Default Joystick
 								        0x11,0x40,0x21,0xC0,
 										0x10,0x40,0x20,0xC0,
@@ -151,7 +153,7 @@ void WriteDataDef(void)
 
 	SAFE_MOD=0x55; SAFE_MOD=0xAA; GLOBAL_CFG |= bDATA_WE; SAFE_MOD=0;
 
-	for(i=0;i<sizeof(DefaultConfig);i++)
+	for(i=0;i!=sizeof(DefaultConfig);i++)
 	{
 			ROM_ADDR_H = DATA_FLASH_ADDR >> 8;
 			ROM_ADDR_L = i*2;
@@ -164,12 +166,11 @@ void WriteDataDef(void)
 }
 #endif
 
-
 void main( )
 {
     uint8_t   s, len, endp;
     uint16_t  loc;
-    int8_t i;
+    uint8_t i;
 
     CfgFsys( );	
 
@@ -203,19 +204,23 @@ again:
     printstr( "Wait Device In\n" );
 
 	printstr("Config Data [0..7]: ");
-	for ( i = 0; i < 8; i++ ){
+	for ( i = 0; i != 8; i++ ){
 		printx2(DevInfo[i]);
 	}
 	printlf();
 
 	printstr("Data Flash [0/2/4/..14]: ");
-	for ( i = 0; i < 16; i++ ){
+	for ( i = 0; i != 16; i++ ){
 			s=ReadData(i);
 			printx2(s);
 	}
 	printlf();
+#endif
 
-	if (ReadData(30+17)!=0x30) {WriteDataDef(); goto again;}
+#ifdef DEFAULT_CONFIG
+	for( i=0 ; i != 4 ; i++)
+	  if ( ReadData(i)!=DefaultConfig[i] )
+		{ WriteDataDef(); break; }
 #endif
 
     while ( 1 )
@@ -277,7 +282,7 @@ again:
 					}
 #if DE_PRINTF					
 					printstr("Joystick Params : "); printlf();
-					for(i=0;i<12;i++) printx2((&p.j.pUidx)[i]); printlf();
+					for(i=0;i!=12;i++) printx2((&p.j.pUidx)[i]); printlf();
 #endif					
 				}
 
@@ -292,15 +297,15 @@ again:
 		}
 
 // pollHIDdevice ?
-		if (timer&0x40)		// 15874/64 -> ~250Hz
+		if (timer&0x40)		// 15874/128 -> ~250hz (4ms)
 		{
 		  timer=0;
 
 		  loc = SearchTypeDevice( DEV_TYPE_MOUSE );                        
 		  if ( loc != 0xFFFF ){                                        
-#if 0*DE_PRINTF
-			printstr( "Query Mouse @");printhex4(loc);printlf();
-#endif
+
+			//printstr( "Query Mouse @");printhex4(loc);printlf();
+
 			i = (uint8_t)( loc >> 8 );
 			len = (uint8_t)loc;
 			SelectHubPort( len ); 
@@ -314,9 +319,9 @@ again:
 					else ThisUsbDev.GpVar[0] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
-#if 0*DE_PRINTF
-						printstr("Mouse data: ");
-						for ( i = 0; i < len; i ++ ){
+#if DE_PRINTF
+						printstr("RX: ");
+						for ( i = 0; i != len; i ++ ){
 							printx2(RxBuffer[i]);
 						}
 						printlf();
@@ -327,39 +332,52 @@ again:
 						if (i&2) BUTT0=0; else BUTT0=1;
 						
 						EA=0;
-						i=RxBuffer[1]; i/=p.m.sdiv;
-						if (i>=0)
-					       	{
-								if (p.m.xdelta<0) p.m.xcnt=0;
-								p.m.xcnt+=i;
-								p.m.xdelta=p.m.minf+p.m.smul*p.m.xcnt;
-								if (p.m.xdelta>=p.m.maxf) p.m.xdelta=p.m.maxf;
-							}
-						else
-					       	{
-								if (p.m.xdelta>=0) p.m.xcnt=0;
-								p.m.xcnt-=i;
-								p.m.xdelta=-p.m.minf-p.m.smul*p.m.xcnt;
-								if (p.m.xdelta<-p.m.maxf) p.m.xdelta=-p.m.maxf;
-							}
+						int8_t sval;		// Temporary signed value (mouse mvt from -127 to + 127)
 
-						i=RxBuffer[2]; i/=p.m.sdiv;
-						if (i>=0)
-					       	{
-								if (p.m.ydelta<0) p.m.ycnt=0;
-								p.m.ycnt+=i;
-								p.m.ydelta=p.m.minf+p.m.smul*p.m.ycnt;
-								if (p.m.ydelta>=p.m.maxf) p.m.ydelta=p.m.maxf;
-							}
-						else
-					       	{
-								if (p.m.ydelta>=0) p.m.ycnt=0;
-								p.m.ycnt-=i;
-								p.m.ydelta=-p.m.minf-p.m.smul*p.m.ycnt;
-								if (p.m.ydelta<-p.m.maxf) p.m.ydelta=-p.m.maxf;
-							}
+						sval=RxBuffer[1];
+
+						if (sval!=0)
+						{
+						 i=(sval>=0)?sval:-sval; i/=p.m.sdiv;
+						 if ( p.m.xcnt && ( 
+							  ((sval>=0)&&(p.m.xdelta<0)) ||
+						      ((sval<0)&&(p.m.xdelta>=0)) ) )
+							{ if (p.m.xcnt>i) p.m.xcnt-=i; else p.m.xcnt=0; }	// Dir changed
+						 else
+						  {if (((int16_t)p.m.xcnt+i)<0x100) p.m.xcnt+=i; else p.m.xcnt=255;}
+						    
+						 uint16_t delta;
+
+						 delta=p.m.minf+p.m.smul*p.m.xcnt;
+						 if (delta>=p.m.maxf) delta=p.m.maxf;
+						 if (sval>=0) p.m.xdelta=delta;
+						         else p.m.xdelta=-delta;						 
+						}
+
+						sval=RxBuffer[2];
+
+						if (sval!=0)
+						{
+						 i=(sval>=0)?sval:-sval; i/=p.m.sdiv;
+						 if (sval>=0)
+							{if (p.m.ydelta<0) p.m.ycnt=0;}
+						 else
+							{if (p.m.ydelta>=0) p.m.ycnt=0;}							
+						 p.m.ycnt+=i;
+						 { uint16_t delta;
+						   delta=p.m.minf+p.m.smul*p.m.ycnt;
+						   if (delta>=p.m.maxf) delta=p.m.maxf;
+						   if (sval>=0) p.m.ydelta=delta;
+						 		   else p.m.ydelta=-delta;
+						 }
+						}
 
 						EA=1;
+#if DE_PRINTF
+						for(i=0;i!=16;i++) printx2((&p.m.xcnt)[i]); printlf();
+#else
+						mDelayuS(900);
+#endif						 
 					}
 				}
 				else if ( s != ( USB_PID_NAK | ERR_USB_TRANSFER ) ) {
@@ -419,6 +437,10 @@ again:
 						 COND(p.j.pRidx,p.j.pRval,DirR,'R')
 
 						 COND(p.j.p1idx,p.j.p1mask,Fire,'*')
+#if DE_PRINTF
+#else
+						 mDelayuS(900);
+#endif						 
 					}
 				}
 				else if ( s != ( USB_PID_NAK | ERR_USB_TRANSFER ) ) {
@@ -432,7 +454,7 @@ again:
 				printstr("Joystick no interrupt endpoint\n");
 #endif
 			}
-			SetUsbSpeed( 1 );                                                 // 默认为全速
+			SetUsbSpeed( 1 );                                                 // The default is full speed
 		  }
 
 		}	//End test if timer
