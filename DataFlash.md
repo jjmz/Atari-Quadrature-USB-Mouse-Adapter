@@ -1,24 +1,24 @@
 DataFlash Offset:
 
-#0 (x02) - mouse DPI divider / TODO : bit 7 for Atari/Amiga switch
-#1 (x03) - step multiplier
-#2 (x08) - minimal increment
-#3 (x20) - maximal increment
+    #0 (x02) - mouse DPI divider / TODO : bit 7 for Atari/Amiga switch
+    #1 (x03) - step multiplier
+    #2 (x08) - minimal increment
+    #3 (x20) - maximal increment
 
-#4 - start of joystick table
+    #4 - start of joystick table
 
 Joystick Table
 
-#0 (0x0F) - offset to next table entry / 0xFF for last
+    #0 (0x0F) - offset to next table entry / 0xFF for last
 
-#1-2 (0x0000) - Vendor ID (0 for default entry)
-#3-4 (0x0000) - Product ID (0 for default entry)
+    #1-2 (0x0000) - Vendor ID (0 for default entry)
+    #3-4 (0x0000) - Product ID (0 for default entry)
 
-#5-6 (0x11-0x40) condition/value for Up
-#7-8 (0x21-0xC0) condition/value for Down
-#9-A (0x10-0x40) condition/value for Left
-#B-C (0x20-0xC0) condition/value for Right
-#D-E (0x33-0xFF) condition/value for Fire Button 1 (more than 1 joystick button will trigger Fire)
+    #5-6 (0x11-0x40) condition/value for Up
+    #7-8 (0x21-0xC0) condition/value for Down
+    #9-A (0x10-0x40) condition/value for Left
+    #B-C (0x20-0xC0) condition/value for Right
+    #D-E (0x33-0xFF) condition/value for Fire Button 1 (more than 1 joystick button will trigger Fire)
 
 Conditions encoding :
 
