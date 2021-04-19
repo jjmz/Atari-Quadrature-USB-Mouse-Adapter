@@ -56,6 +56,8 @@ typedef struct  {
 } joystick_params;
 
 __bit qmouse_mode;
+__bit qmouse_amiga;
+__bit neg_mvmt,prev_neg_mvmt;
 
 union { mouse_params m;
         joystick_params j; } p;
@@ -163,6 +165,23 @@ void WriteDataDef(void)
 
 	SAFE_MOD=0x55; SAFE_MOD=0xAA; GLOBAL_CFG &= ~bDATA_WE; SAFE_MOD=0;
 
+}
+#endif
+
+#if 0 //TODO
+inline uint8_t add_sat255(uint8_t v, uint8_t i)
+{
+ __asm
+ __endasm;
+ return s;
+}
+#else
+inline uint8_t add_sat255(uint8_t v, uint8_t i)
+{
+	//if ((v+i)>=0x100) return 255;
+	uint8_t s=v+i;
+	if (CY) return 255;
+	return s;
 }
 #endif
 
@@ -297,7 +316,7 @@ again:
 		}
 
 // pollHIDdevice ?
-		if (timer&0x40)		// 15874/128 -> ~250hz (4ms)
+		if (timer&0x80)		// 15874/128 -> ~125hz (8ms)
 		{
 		  timer=0;
 
@@ -335,41 +354,37 @@ again:
 						int8_t sval;		// Temporary signed value (mouse mvt from -127 to + 127)
 
 						sval=RxBuffer[1];
-
 						if (sval!=0)
 						{
-						 i=(sval>=0)?sval:-sval; i/=p.m.sdiv;
-						 if ( p.m.xcnt && ( 
-							  ((sval>=0)&&(p.m.xdelta<0)) ||
-						      ((sval<0)&&(p.m.xdelta>=0)) ) )
-							{ if (p.m.xcnt>i) p.m.xcnt-=i; else p.m.xcnt=0; }	// Dir changed
+						 neg_mvmt=(sval<0); i=!neg_mvmt?sval:-sval;
+						 i/=p.m.sdiv; prev_neg_mvmt=(p.m.xdelta<0);
+						 if ( p.m.xcnt && ( neg_mvmt^prev_neg_mvmt ) ) // remaining mvt, but dir changed
+							{ if (p.m.xcnt>=i) {p.m.xcnt-=i;neg_mvmt=!neg_mvmt;} //more remaining
+							              else {p.m.xcnt=(i-p.m.xcnt); }
+							}
 						 else
-						  {if (((int16_t)p.m.xcnt+i)<0x100) p.m.xcnt+=i; else p.m.xcnt=255;}
-						    
-						 uint16_t delta;
-
-						 delta=p.m.minf+p.m.smul*p.m.xcnt;
+						    p.m.xcnt=add_sat255(p.m.xcnt,i);
+						  						    
+						 uint16_t delta=p.m.minf+p.m.smul*p.m.xcnt;
 						 if (delta>=p.m.maxf) delta=p.m.maxf;
-						 if (sval>=0) p.m.xdelta=delta;
-						         else p.m.xdelta=-delta;						 
+						 if (!neg_mvmt) p.m.xdelta=delta; else p.m.xdelta=-delta;						 
 						}
 
 						sval=RxBuffer[2];
-
 						if (sval!=0)
 						{
-						 i=(sval>=0)?sval:-sval; i/=p.m.sdiv;
-						 if (sval>=0)
-							{if (p.m.ydelta<0) p.m.ycnt=0;}
-						 else
-							{if (p.m.ydelta>=0) p.m.ycnt=0;}							
-						 p.m.ycnt+=i;
-						 { uint16_t delta;
-						   delta=p.m.minf+p.m.smul*p.m.ycnt;
-						   if (delta>=p.m.maxf) delta=p.m.maxf;
-						   if (sval>=0) p.m.ydelta=delta;
-						 		   else p.m.ydelta=-delta;
-						 }
+						 neg_mvmt=(sval<0); i=!neg_mvmt?sval:-sval;
+						 i/=p.m.sdiv; prev_neg_mvmt=(p.m.ydelta<0);
+						 if ( p.m.ycnt && ( neg_mvmt^prev_neg_mvmt ) ) // remaining mvt, but dir changed
+							{ if (p.m.ycnt>=i) {p.m.ycnt-=i;neg_mvmt=!neg_mvmt;}
+							              else {p.m.ycnt=(i-p.m.ycnt); }
+							}
+						 else						  
+						    p.m.ycnt=add_sat255(p.m.ycnt,i);						  
+						    
+						 uint16_t delta=p.m.minf+p.m.smul*p.m.ycnt;
+						 if (delta>=p.m.maxf) delta=p.m.maxf;
+						 if (!neg_mvmt) p.m.ydelta=delta; else p.m.ydelta=-delta;						 						 
 						}
 
 						EA=1;
