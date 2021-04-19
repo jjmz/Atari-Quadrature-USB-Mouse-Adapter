@@ -1582,12 +1582,12 @@ uint8_t   EnumAllHubPort( void )
     return( ERR_SUCCESS );
 }
 /*******************************************************************************
-* Function Name  : SearchTypeDevice
-* Description    : 在ROOT-HUB以及外部HUB各端口上搜索指定类型的设备所在的端口号,输出端口号为0xFFFF则未搜索到
-* Input          : uint8_t type 搜索的设备类型
-* Output         : None
-* Return         : 输出高8位为ROOT-HUB端口号,低8位为外部HUB的端口号,低8位为0则设备直接在ROOT-HUB端口上
-                   当然也可以根据USB的厂商VID产品PID进行搜索(事先要记录各设备的VID和PID),以及指定搜索序号
+*Function Name: SearchTypeDevice
+*Description: Search for the port number where the specified type of device is located on each port of ROOT-HUB and external HUB. If the output port number is 0xFFFF, it will not be found
+*Input: uint8_t type search device type
+*Output: None
+*Return: The high 8 bits of the output are the ROOT-HUB port number, the low 8 bits are the port number of the external HUB, and the low 8 bits are 0, the device is directly on the ROOT-HUB port
+                   Of course, you can also search according to the PID of the USB manufacturer's VID product (record the VID and PID of each device in advance), and specify the search serial number
 *******************************************************************************/
 uint16_t  SearchTypeDevice( uint8_t type )   
 {

@@ -1,8 +1,8 @@
 /********************************** (C) COPYRIGHT *******************************
 * File Name          : Derived from USBHostHUB_KM.C
 * Author             : JJM/WCH
-* Version            : V2.0
-* Date               : 2018/07/24 / 2020/11/02
+* Version            : V2.2 (Added Hardware v2)
+* Date               : 2018/07/24 (WCH) / 2021/19/04 (JJM)
 *******************************************************************************/
 
 #include <ch554.h>
@@ -64,10 +64,6 @@ union { mouse_params m;
 
 uint8_t timer=0;
 
-
-SBIT(BUTT0,0xB0,1);		// P3_1
-SBIT(BUTT1,0xB0,0);		// P3_0
-
 // UP   -> P1_4
 // DOWN -> P1_5
 // LEFT -> P1_6
@@ -78,7 +74,40 @@ SBIT(DirU,0x90,4);
 SBIT(DirD,0x90,5);
 SBIT(DirL,0x90,6);
 SBIT(DirR,0x90,7);
-SBIT(Fire,0xB0,0);
+
+//#define HARD_V1
+#define HARD_V2
+
+#ifdef HARD_V1
+	SBIT(BUTT0,0xB0,1);		// P3_1
+	SBIT(BUTT1,0xB0,0);		// P3_0
+	SBIT(Fire,0xB0,0);
+#define INIT_P3 P3 |= 0x03; \
+    		 P3_MOD_OC |= 0x03; /* P3.1,0 Open Collector Output */ \
+    		 P3_DIR_PU |= 0x03;
+#else
+	SBIT(BUTT0,0xB0,3);		// P3_3 (Right button  - DB9-9)
+	SBIT(BUTT1,0xB0,0);		// P3_0 (Left button   - DB9-6)
+	SBIT(BUTT2,0xB0,4);		// P3_4 (middle button - DB9-5)
+	SBIT(Fire,0xB0,3);
+	SBIT(LED,0xB0,2);		// P3_2 (LED, active low)
+							// P3_1 available, as UART TX, non-alternate setting
+#define INIT_P3 P3 |= 0x09; \
+    		 P3_MOD_OC |= 0x0D;  \
+    		 P3_DIR_PU |= 0x09; LED=0;
+
+uint8_t ledcnt=254,ledfsm=0;
+
+__code	uint8_t ledstatus[] ={  32,0x80,         // On
+                                32, 32+1,0x82,   // On-Off 50% Fast / Restart
+                                16,126+1,0x85,	 // 1-Pulse
+								16,16+1,16,96+1,0x88 }; // 2-Pulses
+#define FSM_NODEV     0
+#define FSM_MOUSE     2
+#define FSM_JOYSTICK  5
+#define FSM_JOYSTICK2 8
+#endif
+
 
 void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 	timer++;
@@ -131,7 +160,7 @@ uint8_t ReadData(uint8_t addr)
 	return ROM_DATA_L;
 }
 
-//#define DEFAULT_CONFIG
+#define DEFAULT_CONFIG
 
 #ifdef DEFAULT_CONFIG
 __code uint8_t  DefaultConfig[]= { 0x02,0x04,0x08,0x20,			//Mouse Params
@@ -193,9 +222,8 @@ void main( )
 
     CfgFsys( );	
 
-    P3 |= 0x03;
-    P3_MOD_OC |= 0x03; // P3.1,0 Open Collector Output
-    P3_DIR_PU |= 0x03;
+	// Port 3 initialisation - depends on Hardware Version
+	INIT_P3;
 
     P1 &= 0x0F;
     P1_MOD_OC &= 0x0F; // P1.4,5,6,7 Push-Pull
@@ -204,8 +232,10 @@ void main( )
     mDelaymS(50);
 
 #if DE_PRINTF
-    mInitSTDIO( );                                                          
+    mInitSTDIO( );              
+#ifdef HARD_V1                                            
     CH554UART0Alter();
+#endif	
     printstr( "Start @ChipID=");printhex2(CHIP_ID);printlf();
 #endif
 
@@ -275,12 +305,18 @@ again:
 					printstr("Mouse Params : "); printx2(p.m.sdiv); printx2(p.m.smul); 
 	                printx2(p.m.minf); printx2(p.m.maxf); printlf();
 #endif
+#ifdef HARD_V2
+					ledfsm=FSM_MOUSE;
+#endif					
 					qmouse_mode=1;
 				}
 
 				if (ThisUsbDev.DeviceType == DEV_TYPE_JOYSTICK)
 				{
 					qmouse_mode=0;		// Stops Mouse Quadrature in Int
+#ifdef HARD_V2
+					ledfsm=FSM_JOYSTICK;
+#endif
 					i=4;
 					while ((s=ReadData(i))!=0xFF)
 					{
@@ -296,6 +332,9 @@ again:
 								p.j.pLidx = ReadData(i+9); p.j.pLval = ReadData(i+10);
 								p.j.pRidx = ReadData(i+11); p.j.pRval = ReadData(i+12);
 								p.j.p1idx = ReadData(i+13); p.j.p1mask = ReadData(i+14);
+#ifdef HARD_V2
+								if (vid!=0) ledfsm=FSM_JOYSTICK2;
+#endif								
 							}
 						i+=s;
 					}
@@ -319,6 +358,16 @@ again:
 		if (timer&0x80)		// 15874/128 -> ~125hz (8ms)
 		{
 		  timer=0;
+
+#ifdef HARD_V2
+ 		  ledcnt--;
+		  if (!ledcnt)
+			 {
+			  ledcnt=(ledstatus[ledfsm]&0x7E)*2+2;
+			  if (ledstatus[ledfsm]&1) LED=1; else LED=0;
+			  ledfsm++; if (ledstatus[ledfsm]&0x80) ledfsm=ledstatus[ledfsm]&0x7F;
+			 };
+#endif
 
 		  loc = SearchTypeDevice( DEV_TYPE_MOUSE );                        
 		  if ( loc != 0xFFFF ){                                        
