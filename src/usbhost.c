@@ -1548,12 +1548,12 @@ uint8_t EnumHubPort( )
     return( ERR_SUCCESS );                                                            // 返回操作成功
 }
 /*******************************************************************************
-* Function Name  : EnumAllHubPort
-* Description    : 枚举所有ROOT-HUB端口下外部HUB后的二级USB设备
-* Input          : None
-* Output         : None
-* Return         : ERR_SUCCESS 成功
-                   其他        失败
+*Function Name: EnumAllHubPort
+*Description: Enumerate all secondary USB devices behind the external HUB under the ROOT-HUB port
+*Input: None
+*Output: None
+*Return: ERR_SUCCESS success
+                   Other failure
 *******************************************************************************/
 uint8_t   EnumAllHubPort( void ) 
 {

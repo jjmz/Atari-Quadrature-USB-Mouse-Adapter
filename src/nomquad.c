@@ -98,8 +98,8 @@ SBIT(DirR,0x90,7);
 
 uint8_t ledcnt=254,ledfsm=0;
 
-__code	uint8_t ledstatus[] ={  32,0x80,         // On
-                                32, 32+1,0x82,   // On-Off 50% Fast / Restart
+__code	uint8_t ledstatus[] ={  2,0x80,          // On
+                                16, 16+1,0x82,   // On-Off 50% Fast / Restart
                                 16,126+1,0x85,	 // 1-Pulse
 								16,16+1,16,96+1,0x88 }; // 2-Pulses
 #define FSM_NODEV     0
@@ -169,12 +169,16 @@ __code uint8_t  DefaultConfig[]= { 0x02,0x04,0x08,0x20,			//Mouse Params
 										0x10,0x40,0x20,0xC0,
 										0x33,0xFF,
 								   0x0F,0x00,0x79,0x00,0x06,	//DragonRise Inc. - PC TWIN SHOCK Gamepad
-								        0x11,0x40,0x21,0xC0,	// > <
-										0x10,0x40,0x20,0xC0,	// > <
+								        0x11,0x40,0x21,0xC0,	// < >
+										0x10,0x40,0x20,0xC0,	// < >
 										0x36,0xFF,				// &
 								   0x0F,0x2D,0xC8,0x60,0x01,	// 8bitdo / SN30 Pro
-								        0x14,0x40,0x24,0xC0,	// > <
-										0x13,0x40,0x23,0xC0,	// > <
+								        0x14,0x40,0x24,0xC0,	// < >
+										0x13,0x40,0x23,0xC0,	// < >
+										0x30,0xFF,				// &
+								   0x0F,0x04,0x4F,0xB3,0x15,	// ??? / Trustmaster
+								        0x44,0xC0,0x54,0x40,	// <- >+
+										0x43,0xC0,0x53,0x40,	// <- >+
 										0x30,0xFF,				// &
 								   0xFF};						// End
 
@@ -267,9 +271,10 @@ again:
 #endif
 
 #ifdef DEFAULT_CONFIG
-	for( i=0 ; i != 4 ; i++)
-	  if ( ReadData(i)!=DefaultConfig[i] )
-		{ WriteDataDef(); break; }
+//	for( i=0 ; i != sizeof(DefaultConfig) ; i++)
+//	  if ( ReadData(i)!=DefaultConfig[i] )
+//		{ WriteDataDef(); break; }
+	if ( ReadData(0)==0xFF ) WriteDataDef();		// If DataFlash unprogrammed -> Default
 #endif
 
     while ( 1 )
@@ -281,6 +286,14 @@ again:
             UIF_DETECT = 0;                                                 
             s = AnalyzeRootHub( );                                              
             if ( s == ERR_USB_CONNECT ) FoundNewDev = 1;						
+			if ( s == ERR_USB_DISCON ) 	{
+#if DE_PRINTF								
+                printstr( "Disconnect\n");
+#endif		
+#ifdef HARD_V2
+					ledfsm=FSM_NODEV;
+#endif		
+			}
         }
         if ( FoundNewDev ){
             FoundNewDev = 0;
@@ -476,21 +489,39 @@ again:
 					if ( len ) {
 								// UP/DOWN/LEFT/RIGHT -> P1_4/5/6/7
 								// FIRE -> P3_0
+
+#if DE_PRINTF
+						printstr("RX: ");
+						for ( i = 0; i != len; i ++ ){
+							printx2(RxBuffer[i]);
+						}
+						printlf();
+#endif
+
 #if DE_PRINTF
 	#define CH(a) putch(a);
 #else
 	#define CH(a)
 #endif
 
-#define COND(idx,val,io,c) { switch (idx&0xF0) \
-                             {  case 0x10: \
+#define COND(idx,val,io,c) { switch (idx>>4) \
+                             {   case 0x0: \
+							      if (RxBuffer[idx&0xF]==val) {io=0;CH(c);} else {io=1;} \
+								  break; \
+								 case 0x1: \
 							      if (RxBuffer[idx&0xF]<val) {io=0;CH(c);} else {io=1;} \
 								  break; \
-							    case 0x20: \
+							    case 0x2: \
 								  if (RxBuffer[idx&0xF]>val) {io=0;CH(c);} else {io=1;} \
                                   break; \
-								case 0x30: \
+								case 0x3: \
 								  if (RxBuffer[idx&0xF]&val) {io=0;CH(c);} else {io=1;} \
+								  break; \
+								case 0x4: \
+							      if ((int8_t)RxBuffer[idx&0xF]<(int8_t)val) {io=0;CH(c);} else {io=1;} \
+								  break; \
+								case 0x5: \
+							      if ((int8_t)RxBuffer[idx&0xF]>(int8_t)val) {io=0;CH(c);} else {io=1;} \
 								  break; \
 							 } \
 						 }
