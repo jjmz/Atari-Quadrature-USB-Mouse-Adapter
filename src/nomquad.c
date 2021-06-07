@@ -1,8 +1,8 @@
 /********************************** (C) COPYRIGHT *******************************
 * File Name          : Derived from USBHostHUB_KM.C
 * Author             : JJM/WCH
-* Version            : V2.2 (Added Hardware v2)
-* Date               : 2018/07/24 (WCH) / 2021/19/04 (JJM)
+* Version            : V2.3 (Added Hardware v2)
+* Date               : 2018/07/24 (WCH) / 2021/02/06 (JJM)
 *******************************************************************************/
 
 #include <ch554.h>
@@ -30,6 +30,29 @@ __xdata __at (0x03C0) uint8_t  TxBuffer[ MAX_PACKET_SIZE ];                     
 
 __code __at (0x3FF8) uint8_t DevInfo[8];
 
+#define IDX_JOYSTICK 16
+#define INC_JOYSTICK 20
+
+#include "joystick-table.h"
+
+__code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//Mouse Params (16 bytes)
+                                              0x00,0x00, 0x00,0x00,			// Spare - Future Button 1/2 ?
+											  0x00,0x00, 0x00,0x00,			// Spare - Button 3 ?
+											  0x00,0x00, 0x00,0x00,			// Spare
+DEFAULT_JOYSTICK	\
+TWINSHOCK			\
+EIGHTBITDO_SN30		\
+THRUSTMASTER		\
+EMPTY				\
+EMPTY				\
+EMPTY				\
+EMPTY				\
+EMPTY				\
+EMPTY				\
+EMPTY				\
+EMPTY				
+};
+
 uint8_t Set_Port = 0;
 
 __xdata _RootHubDev ThisUsbDev;                                                   //ROOT
@@ -38,22 +61,23 @@ __xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];
 __bit FoundNewDev;
 
 typedef struct  {
-	uint8_t  xcnt,ycnt;		//2
-	int16_t  xdelta,ydelta;	//4
-	uint16_t xval,yval;		//4
-	uint8_t xph,yph;		//2
-	uint8_t sdiv,smul;		//2
-	uint8_t minf,maxf;		//2 -> 16b
-} mouse_params;
+	uint8_t  xcnt,ycnt;		//2 - pulse counter
+	int16_t  xdelta,ydelta;	//4 - increment value for accumulator
+	uint16_t xval,yval;		//4 - accumulator value
+	uint8_t xph,yph;		//2 - phase
+	uint8_t sdiv,smul;		//2 - config : DPI div, counter mult.
+	uint8_t minf,maxf;		//2          : min increment, max increment
+} mouse_params;             // -> 16b
 
 typedef struct  {
-	uint8_t pUidx,pUval;	//2
-	uint8_t pDidx,pDval;
-	uint8_t pLidx,pLval;
-	uint8_t pRidx,pRval;
-	uint8_t p1idx,p1mask;
-	uint8_t p2idx,p2mask;	// -> 2*6 -> 12b
-} joystick_params;
+	uint8_t pUidx,pUval;	//2 - Up   [condition+index,value]
+	uint8_t pDidx,pDval;	//2 - Down
+	uint8_t pLidx,pLval;	//2 - Left
+	uint8_t pRidx,pRval;	//2 - Right
+	uint8_t p1idx,p1mask;	//2 - Button 1 (L)
+	uint8_t p2idx,p2mask;	//2 - Button 2 (R)
+	uint8_t p3idx,p3mask;	//2 - button 3 (M)
+} joystick_params;			// -> 2*7 -> 14b
 
 __bit qmouse_mode;
 __bit qmouse_amiga;
@@ -68,33 +92,33 @@ uint8_t timer=0;
 // DOWN -> P1_5
 // LEFT -> P1_6
 // RGHT -> P1_7
-// FIRE -> P3_0
 
 SBIT(DirU,0x90,4);
 SBIT(DirD,0x90,5);
 SBIT(DirL,0x90,6);
 SBIT(DirR,0x90,7);
 
-//#define HARD_V1
-#define HARD_V2
+#if HARDWARE==1
+ #define HARD_V1
+#else
+ #define HARD_V2
+#endif
 
 #ifdef HARD_V1
-	SBIT(BUTT0,0xB0,1);		// P3_1
-	SBIT(BUTT1,0xB0,0);		// P3_0
-	SBIT(Fire,0xB0,0);
-#define INIT_P3 P3 |= 0x03; \
-    		 P3_MOD_OC |= 0x03; /* P3.1,0 Open Collector Output */ \
-    		 P3_DIR_PU |= 0x03;
+	SBIT(BUTT_L,0xB0,1);		// P3_1
+	SBIT(BUTT_R,0xB0,0);		// P3_0
+#define INIT_P3 P3        |= 0x03; \
+    		    P3_MOD_OC |= 0x03; /* P3.1,0 Open Collector Output */ \
+    		    P3_DIR_PU |= 0x03;
 #else
-	SBIT(BUTT0,0xB0,3);		// P3_3 (Right button  - DB9-9)
-	SBIT(BUTT1,0xB0,0);		// P3_0 (Left button   - DB9-6)
-	SBIT(BUTT2,0xB0,4);		// P3_4 (middle button - DB9-5)
-	SBIT(Fire,0xB0,3);
-	SBIT(LED,0xB0,2);		// P3_2 (LED, active low)
-							// P3_1 available, as UART TX, non-alternate setting
-#define INIT_P3 P3 |= 0x09; \
-    		 P3_MOD_OC |= 0x0D;  \
-    		 P3_DIR_PU |= 0x09; LED=0;
+	SBIT(BUTT_R,0xB0,3);		// P3_3 (Right button  - DB9-9)
+	SBIT(BUTT_L,0xB0,0);		// P3_0 (Left button   - DB9-6) = Fire 
+	SBIT(BUTT_M,0xB0,4);		// P3_4 (middle button - DB9-5)
+	SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
+							    // P3_1 available, as UART TX, non-alternate setting
+#define INIT_P3 P3        |= 0x19;  \
+    		    P3_MOD_OC |= 0x1D;  \
+    		    P3_DIR_PU |= 0x19; LED=0;
 
 uint8_t ledcnt=254,ledfsm=0;
 
@@ -108,6 +132,9 @@ __code	uint8_t ledstatus[] ={  2,0x80,          // On
 #define FSM_JOYSTICK2 8
 #endif
 
+//              P1.  4   5   6   7
+// Atari ST mouse 	X1 	X0 	Y0 	Y1 	-> Tested OK
+// Amiga mouse 	    Y0 	X0 	Y1 	X1 	-> TBC
 
 void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 	timer++;
@@ -119,6 +146,8 @@ void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 		if (((p.m.xval>>8)&0xff)!=p.m.xph) {
 		  p.m.xph=p.m.xval>>8;
 		  p.m.xcnt--;
+		  if (qmouse_amiga)
+		  {
 		  ACC=p.m.xph;
 		  __asm 
 			jnb	ACC.1,00000$
@@ -127,8 +156,22 @@ void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 			rrc	A
 			mov	0x95,c
 			rrc	A
+			mov	0x97,c
+		  __endasm;
+		  }
+		  else
+		  {
+		  ACC=p.m.xph;
+		  __asm 
+			jnb	ACC.1,00001$
+			cpl	ACC.0
+00001$:
+			rrc	A
+			mov	0x95,c
+			rrc	A
 			mov	0x94,c
 		  __endasm;
+		  }
 		}
 	 } else {p.m.xdelta=0;}
 
@@ -137,69 +180,36 @@ void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 		if (((p.m.yval>>8)&0xff)!=p.m.yph) {
 		  p.m.yph=p.m.yval>>8;
 		  p.m.ycnt--;
+		  if (qmouse_amiga)
+		  {
 		  ACC=p.m.yph;
 		  __asm 
-			jnb	ACC.1,00001$
+			jnb	ACC.1,00002$
 			cpl	ACC.0
-00001$:
+00002$:
+			rrc	A
+			mov	0x96,c
+			rrc	A
+			mov	0x94,c
+		  __endasm;
+		  }
+		  else
+		  {
+		  ACC=p.m.yph;
+		  __asm 
+			jnb	ACC.1,00003$
+			cpl	ACC.0
+00003$:
 			rrc	A
 			mov	0x97,c
 			rrc	A
 			mov	0x96,c
 		  __endasm;
+		  }
 		}
 	 } else {p.m.ydelta=0;}
 	}
 }
-
-uint8_t ReadData(uint8_t addr)
-{
-	ROM_ADDR_H = DATA_FLASH_ADDR >> 8;
-	ROM_ADDR_L = 2*addr;
-	ROM_CTRL = ROM_CMD_READ;
-	return ROM_DATA_L;
-}
-
-#define DEFAULT_CONFIG
-
-#ifdef DEFAULT_CONFIG
-__code uint8_t  DefaultConfig[]= { 0x02,0x04,0x08,0x20,			//Mouse Params
-                                   0x0F,0x00,0x00,0x00,0x00,	//Default Joystick
-								        0x11,0x40,0x21,0xC0,
-										0x10,0x40,0x20,0xC0,
-										0x33,0xFF,
-								   0x0F,0x00,0x79,0x00,0x06,	//DragonRise Inc. - PC TWIN SHOCK Gamepad
-								        0x11,0x40,0x21,0xC0,	// < >
-										0x10,0x40,0x20,0xC0,	// < >
-										0x36,0xFF,				// &
-								   0x0F,0x2D,0xC8,0x60,0x01,	// 8bitdo / SN30 Pro
-								        0x14,0x40,0x24,0xC0,	// < >
-										0x13,0x40,0x23,0xC0,	// < >
-										0x30,0xFF,				// &
-								   0x0F,0x04,0x4F,0xB3,0x15,	// ??? / Trustmaster
-								        0x44,0xC0,0x54,0x40,	// <- >+
-										0x43,0xC0,0x53,0x40,	// <- >+
-										0x30,0xFF,				// &
-								   0xFF};						// End
-
-void WriteDataDef(void)
-{
-	uint8_t i;
-
-	SAFE_MOD=0x55; SAFE_MOD=0xAA; GLOBAL_CFG |= bDATA_WE; SAFE_MOD=0;
-
-	for(i=0;i!=sizeof(DefaultConfig);i++)
-	{
-			ROM_ADDR_H = DATA_FLASH_ADDR >> 8;
-			ROM_ADDR_L = i*2;
-			ROM_DATA_L = DefaultConfig[i];
-			ROM_CTRL = ROM_CMD_WRITE;			
-	}
-
-	SAFE_MOD=0x55; SAFE_MOD=0xAA; GLOBAL_CFG &= ~bDATA_WE; SAFE_MOD=0;
-
-}
-#endif
 
 #if 0 //TODO
 inline uint8_t add_sat255(uint8_t v, uint8_t i)
@@ -217,6 +227,11 @@ inline uint8_t add_sat255(uint8_t v, uint8_t i)
 	return s;
 }
 #endif
+
+inline void xdatacpy(__code uint8_t *src, __data uint8_t *dest,uint8_t nb)
+{
+	for (uint8_t i=nb;i!=0;i--) *dest++=*src++;
+}
 
 void main( )
 {
@@ -243,8 +258,8 @@ void main( )
     printstr( "Start @ChipID=");printhex2(CHIP_ID);printlf();
 #endif
 
-    T2MOD &= 0xEF;			// BT0_CLK = Fsys/12 (1333333Hz)
-    TMOD = TMOD & 0xF0 | 0x02; 		// Timer 0 mode 1
+    T2MOD &= 0xEF;				// BT0_CLK = Fsys/12 (1333333Hz)
+    TMOD = TMOD & 0xF0 | 0x02; 	// Timer 0 mode 1
     TH0 = 0 - 84; TR0 = 1;		// 1333333/84 -> 15873 Hz
     ET0=1;
     EA=1;
@@ -261,20 +276,6 @@ again:
 		printx2(DevInfo[i]);
 	}
 	printlf();
-
-	printstr("Data Flash [0/2/4/..14]: ");
-	for ( i = 0; i != 16; i++ ){
-			s=ReadData(i);
-			printx2(s);
-	}
-	printlf();
-#endif
-
-#ifdef DEFAULT_CONFIG
-//	for( i=0 ; i != sizeof(DefaultConfig) ; i++)
-//	  if ( ReadData(i)!=DefaultConfig[i] )
-//		{ WriteDataDef(); break; }
-	if ( ReadData(0)==0xFF ) WriteDataDef();		// If DataFlash unprogrammed -> Default
 #endif
 
     while ( 1 )
@@ -309,9 +310,10 @@ again:
 				if (ThisUsbDev.DeviceType == DEV_TYPE_MOUSE)
 				{
 					memset(&p,0,sizeof(p));
-					if (ReadData(0)!=0xFF)
-	 					{p.m.sdiv=ReadData(0); p.m.smul=ReadData(1);
-	  					 p.m.minf=ReadData(2); p.m.maxf=ReadData(3);}
+					if (DevTable[0]!=0xFF)
+	 					{qmouse_amiga=DevTable[0]&0x80?1:0;
+					     p.m.sdiv=DevTable[0]&0x7F; p.m.smul=DevTable[1];
+	  					 p.m.minf=DevTable[2]; p.m.maxf=DevTable[3];}
 					else 
 	 					{p.m.sdiv=1; p.m.smul=2; p.m.minf=0; p.m.maxf=250;}
 #if DE_PRINTF
@@ -330,26 +332,19 @@ again:
 #ifdef HARD_V2
 					ledfsm=FSM_JOYSTICK;
 #endif
-					i=4;
-					while ((s=ReadData(i))!=0xFF)
-					{
-						uint16_t vid,pid;
-						vid=ReadData(i+1)<<8|ReadData(i+2);
-						pid=ReadData(i+3)<<8|ReadData(i+4);
 
-						if ( ((vid==0)&&(pid==0)) || 
-						     ((vid==ThisUsbDev.DeviceVID)&&(pid==ThisUsbDev.DevicePID)) )
-							{
-								p.j.pUidx = ReadData(i+5); p.j.pUval = ReadData(i+6);
-								p.j.pDidx = ReadData(i+7); p.j.pDval = ReadData(i+8);
-								p.j.pLidx = ReadData(i+9); p.j.pLval = ReadData(i+10);
-								p.j.pRidx = ReadData(i+11); p.j.pRval = ReadData(i+12);
-								p.j.p1idx = ReadData(i+13); p.j.p1mask = ReadData(i+14);
+					xdatacpy(&DevTable[IDX_JOYSTICK+4],&p.j.pUidx,14);
+
+					for(i=(IDX_JOYSTICK+INC_JOYSTICK);i!=0;i+=INC_JOYSTICK)
+					{
+					 if (*(uint16_t *)&DevTable[i]==ThisUsbDev.DeviceVID)
+					  if (*(uint16_t *)&DevTable[(uint8_t)(i+2)]==ThisUsbDev.DevicePID)
+						{								
 #ifdef HARD_V2
-								if (vid!=0) ledfsm=FSM_JOYSTICK2;
+							ledfsm=FSM_JOYSTICK2;
 #endif								
-							}
-						i+=s;
+							xdatacpy(&DevTable[(uint8_t)(i+4)],&p.j.pUidx,14);
+						}					 
 					}
 #if DE_PRINTF					
 					printstr("Joystick Params : "); printlf();
@@ -407,11 +402,15 @@ again:
 						}
 						printlf();
 #endif
-						i=RxBuffer[0];
-
-						if (i&1) BUTT1=0; else BUTT1=1;
-						if (i&2) BUTT0=0; else BUTT0=1;
-						
+						// TODO : modif depending on mouse button table...
+						i=RxBuffer[0];		// 0->Left,1->Right,2->Middle
+						if (i&1) BUTT_L=0; else BUTT_L=1;
+						if (i&2) BUTT_R=0; else BUTT_R=1;
+#ifdef HARD_V2						
+						if (i&4) BUTT_M=0; else BUTT_M=1;
+#else
+						if (i&4) BUTT_L=0; else BUTT_L=1;		// Stephane's request
+#endif						
 						EA=0;
 						int8_t sval;		// Temporary signed value (mouse mvt from -127 to + 127)
 
@@ -487,53 +486,30 @@ again:
 					else ThisUsbDev.GpVar[0] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
-								// UP/DOWN/LEFT/RIGHT -> P1_4/5/6/7
-								// FIRE -> P3_0
-
 #if DE_PRINTF
 						printstr("RX: ");
-						for ( i = 0; i != len; i ++ ){
-							printx2(RxBuffer[i]);
-						}
+						for ( i = 0; i != len; i ++ ) { printx2(RxBuffer[i]); }
 						printlf();
-#endif
-
-#if DE_PRINTF
 	#define CH(a) putch(a);
 #else
 	#define CH(a)
 #endif
 
-#define COND(idx,val,io,c) { switch (idx>>4) \
-                             {   case 0x0: \
-							      if (RxBuffer[idx&0xF]==val) {io=0;CH(c);} else {io=1;} \
-								  break; \
-								 case 0x1: \
-							      if (RxBuffer[idx&0xF]<val) {io=0;CH(c);} else {io=1;} \
-								  break; \
-							    case 0x2: \
-								  if (RxBuffer[idx&0xF]>val) {io=0;CH(c);} else {io=1;} \
-                                  break; \
-								case 0x3: \
-								  if (RxBuffer[idx&0xF]&val) {io=0;CH(c);} else {io=1;} \
-								  break; \
-								case 0x4: \
-							      if ((int8_t)RxBuffer[idx&0xF]<(int8_t)val) {io=0;CH(c);} else {io=1;} \
-								  break; \
-								case 0x5: \
-							      if ((int8_t)RxBuffer[idx&0xF]>(int8_t)val) {io=0;CH(c);} else {io=1;} \
-								  break; \
-							 } \
-						 }
+#define COND(idx,val,io,c) { cpval=val; i=cond_set_io(idx); if(i==0) {io=0;CH(c);}; if (i==1) io=1; }
 
+// Up/Down/Left/Right
 						 COND(p.j.pUidx,p.j.pUval,DirU,'U')
 						 COND(p.j.pDidx,p.j.pDval,DirD,'D')
 						 COND(p.j.pLidx,p.j.pLval,DirL,'L')
 						 COND(p.j.pRidx,p.j.pRval,DirR,'R')
+// Buttons
+						 COND(p.j.p1idx,p.j.p1mask,BUTT_L,'l')
+						 COND(p.j.p2idx,p.j.p2mask,BUTT_R,'r')
+#ifdef HARD_V2						 
+						 COND(p.j.p3idx,p.j.p3mask,BUTT_M,'m')
+#endif
 
-						 COND(p.j.p1idx,p.j.p1mask,Fire,'*')
-#if DE_PRINTF
-#else
+#if !DE_PRINTF
 						 mDelayuS(900);
 #endif						 
 					}
@@ -556,3 +532,4 @@ again:
 
     }	// End While
 }
+

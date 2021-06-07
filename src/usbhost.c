@@ -70,7 +70,7 @@ uint8_t   AnalyzeRootHub( void )
 }
 /*******************************************************************************
 * Function Name  : SetHostUsbAddr
-* Description    : 设置USB主机当前操作的USB设备地址
+* Description    : Set the USB device address currently operated by the USB host
 * Input          : uint8_t addr
 * Output         : None
 * Return         : None
@@ -82,80 +82,80 @@ void    SetHostUsbAddr( uint8_t addr )
 
 /*******************************************************************************
 * Function Name  : SetUsbSpeed
-* Description    : 设置当前USB速度
+* Description    : Set current USB speed
 * Input          : uint8_t FullSpeed
 * Output         : None
 * Return         : None
 *******************************************************************************/
 void    SetUsbSpeed( uint8_t FullSpeed )  
 {
-    if ( FullSpeed )                                                           // 全速
+    if ( FullSpeed )                                                           // full speed
     {
-        USB_CTRL &= ~ bUC_LOW_SPEED;                                           // 全速
-        UH_SETUP &= ~ bUH_PRE_PID_EN;                                          // 禁止PRE PID
+        USB_CTRL &= ~ bUC_LOW_SPEED;                                           // full speed
+        UH_SETUP &= ~ bUH_PRE_PID_EN;                                          // Prohibit PRE PID
     }
     else
     {
-        USB_CTRL |= bUC_LOW_SPEED;                                             // 低速		
+        USB_CTRL |= bUC_LOW_SPEED;                                             // Low speed	
     }
 }
 
 /*******************************************************************************
 * Function Name  : ResetRootHubPort( )
-* Description    : 检测到设备后,复位总线,为枚举设备准备,设置为默认为全速
+* Description    : After the device is detected, reset the bus to prepare for enumerating the device, and set it to default to full speed
 * Input          : None   
 * Output         : None
 * Return         : None
 *******************************************************************************/
 void  ResetRootHubPort( )
 {
-    UsbDevEndp0Size = DEFAULT_ENDP0_SIZE;                                      //USB设备的端点0的最大包尺寸
-    memset( &ThisUsbDev,0,sizeof(ThisUsbDev));                                 //清空结构体
+    UsbDevEndp0Size = DEFAULT_ENDP0_SIZE;                                      //Maximum packet size of endpoint 0 of the USB device
+    memset( &ThisUsbDev,0,sizeof(ThisUsbDev));                                 //Empty structure
 	SetHostUsbAddr( 0x00 );
-    UHOST_CTRL &= ~bUH_PORT_EN;                                                // 关掉端口
-	SetUsbSpeed( 1 );                                                          // 默认为全速
-	UHOST_CTRL = UHOST_CTRL & ~ bUH_LOW_SPEED | bUH_BUS_RESET;                 // 默认为全速,开始复位
-    mDelaymS( 20 );                                                            // 复位时间10mS到20mS
-    UHOST_CTRL = UHOST_CTRL & ~ bUH_BUS_RESET;                                 // 结束复位
+    UHOST_CTRL &= ~bUH_PORT_EN;                                                // Turn off the port
+	SetUsbSpeed( 1 );                                                          // The default is full speed
+	UHOST_CTRL = UHOST_CTRL & ~ bUH_LOW_SPEED | bUH_BUS_RESET;                 // The default is full speed, start to reset
+    mDelaymS( 20 );                                                            // Reset time 10mS to 20mS
+    UHOST_CTRL = UHOST_CTRL & ~ bUH_BUS_RESET;                                 // End reset
     mDelayuS( 250 );
-    UIF_DETECT = 0;                                                            // 清中断标志
+    UIF_DETECT = 0;                                                            // Clear interrupt flag
 }
 /*******************************************************************************
 * Function Name  : EnableRootHubPort( )
-* Description    : 使能ROOT-HUB端口,相应的bUH_PORT_EN置1开启端口,设备断开可能导致返回失败
+* Description    : Enable the ROOT-HUB port, and the corresponding bUH_PORT_EN is set to 1 to enable the port. The device disconnection may cause the return failure
 * Input          : None
 * Output         : None
-* Return         : 返回ERR_SUCCESS为检测到新连接,返回ERR_USB_DISCON为无连接
+* Return         : Return ERR_SUCCESS to detect a new connection, return ERR_USB_DISCON to indicate no connection
 *******************************************************************************/
 uint8_t   EnableRootHubPort( )
 {
 	if ( ThisUsbDev.DeviceStatus < ROOT_DEV_CONNECTED ) ThisUsbDev.DeviceStatus = ROOT_DEV_CONNECTED;
-	if ( USB_MIS_ST & bUMS_DEV_ATTACH ) {                                        // 有设备
-		if ( ( UHOST_CTRL & bUH_PORT_EN ) == 0x00 ) {                              // 尚未使能
+	if ( USB_MIS_ST & bUMS_DEV_ATTACH ) {                                        // Have equipment
+		if ( ( UHOST_CTRL & bUH_PORT_EN ) == 0x00 ) {                              // Not yet enabled
 			ThisUsbDev.DeviceSpeed = USB_MIS_ST & bUMS_DM_LEVEL ? 0 : 1;
-			if ( ThisUsbDev.DeviceSpeed == 0 ) UHOST_CTRL |= bUH_LOW_SPEED;          // 低速
+			if ( ThisUsbDev.DeviceSpeed == 0 ) UHOST_CTRL |= bUH_LOW_SPEED;          // Low speed
 		}
-		USB_CTRL |= bUC_DMA_EN;                                                    // 启动USB主机及DMA,在中断标志未清除前自动暂停
+		USB_CTRL |= bUC_DMA_EN;                                                    // Start the USB host and DMA, and automatically pause before the interrupt flag is cleared
 		UH_SETUP = bUH_SOF_EN;		
-		UHOST_CTRL |= bUH_PORT_EN;                                                 //使能HUB端口
+		UHOST_CTRL |= bUH_PORT_EN;                                                 //Enable HUB port
 		return( ERR_SUCCESS );
 	}
 	return( ERR_USB_DISCON );
 }
 /*******************************************************************************
 * Function Name  : SelectHubPort( uint8_t HubPortIndex )
-* Description    : 选定需要操作的HUB口
-* Input          : uint8_t HubPortIndex 选择操作指定的ROOT-HUB端口的外部HUB的指定端口
+* Description    : Select the HUB port to be operated
+* Input          : uint8_t HubPortIndex Select the designated port of the external HUB to operate the designated ROOT-HUB port
 * Output         : None
 * Return         : None
 *******************************************************************************/
 void    SelectHubPort( uint8_t HubPortIndex )  
 { 
-    if( HubPortIndex )                                                         // 选择操作指定的ROOT-HUB端口的外部HUB的指定端口
+    if( HubPortIndex )                                                         // Select the designated port of the external HUB to operate the designated ROOT-HUB port
     {
-        SetHostUsbAddr( DevOnHubPort[HubPortIndex-1].DeviceAddress );          // 设置USB主机当前操作的USB设备地址
-        SetUsbSpeed( DevOnHubPort[HubPortIndex-1].DeviceSpeed );               // 设置当前USB速度
-		if ( DevOnHubPort[HubPortIndex-1].DeviceSpeed == 0 )                   // 通过外部HUB与低速USB设备通讯需要前置ID
+        SetHostUsbAddr( DevOnHubPort[HubPortIndex-1].DeviceAddress );          // Set the USB device address currently operated by the USB host
+        SetUsbSpeed( DevOnHubPort[HubPortIndex-1].DeviceSpeed );               // Set current USB speed
+		if ( DevOnHubPort[HubPortIndex-1].DeviceSpeed == 0 )                   // Communication with low-speed USB devices via external HUB requires front ID
         {
             UH_SETUP |= bUH_PRE_PID_EN;                                        // 启用PRE PID
             HubLowSpeed = 1;
@@ -199,19 +199,19 @@ uint8_t WaitUSB_Interrupt( void )
 uint8_t   USBHostTransact( uint8_t endp_pid, uint8_t tog, uint16_t timeout )
 {
 //	uint8_t	TransRetry;
-#define	TransRetry	UEP0_T_LEN	                                               // 节约内存
+#define	TransRetry	UEP0_T_LEN	                                               // Save memory
 	uint8_t	s, r;
 	uint16_t	i;
 	UH_RX_CTRL = UH_TX_CTRL = tog;
 	TransRetry = 0;
 
 	do {
-		UH_EP_PID = endp_pid;                                                      // 指定令牌PID和目的端点号
-		UIF_TRANSFER = 0;                                                          // 允许传输
+		UH_EP_PID = endp_pid;                                                      // Specify the token PID and destination endpoint number
+		UIF_TRANSFER = 0;                                                          // Allow transfer
 //  s = WaitUSB_Interrupt( );
 		for ( i = WAIT_USB_TOUT_200US; i != 0 && UIF_TRANSFER == 0; i -- );
-		UH_EP_PID = 0x00;                                                          // 停止USB传输
-//	if ( s != ERR_SUCCESS ) return( s );  // 中断超时,可能是硬件异常
+		UH_EP_PID = 0x00;                                                          // Stop USB transfer
+//	if ( s != ERR_SUCCESS ) return( s );  // Interrupt timeout, may be a hardware abnormality
 		if ( UIF_TRANSFER == 0 ) return( ERR_USB_UNKNOWN );
 		if ( UIF_DETECT ) {                                                        // USB设备插拔事件
 //			mDelayuS( 200 );                                                       // 等待传输完成
