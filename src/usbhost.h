@@ -129,6 +129,7 @@ uint8_t   EnumAllHubPort( void );                        // 枚举所有ROOT-HUB
 uint16_t  SearchTypeDevice( uint8_t type );                // 在ROOT-HUB以及外部HUB各端口上搜索指定类型的设备所在的端口号,输出端口号为0xFFFF则未搜索到
 													   // 输出高8位为ROOT-HUB端口号,低8位为外部HUB的端口号,低8位为0则设备直接在ROOT-HUB端口上
 uint8_t SETorOFFNumLock(uint8_t *buf);
+uint8_t SetBootProto(void);
 #endif
 
 uint8_t   InitRootDevice( void );                        // 初始化指定ROOT-HUB端口的USB设备

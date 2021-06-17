@@ -309,6 +309,8 @@ again:
 			{
 				if (ThisUsbDev.DeviceType == DEV_TYPE_MOUSE)
 				{
+					SetBootProto();
+					
 					memset(&p,0,sizeof(p));
 					if (DevTable[0]!=0xFF)
 	 					{qmouse_amiga=DevTable[0]&0x80?1:0;
