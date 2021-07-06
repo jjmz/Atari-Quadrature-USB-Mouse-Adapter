@@ -98,6 +98,8 @@ SBIT(DirD,0x90,5);
 SBIT(DirL,0x90,6);
 SBIT(DirR,0x90,7);
 
+SBIT(DEBUGP,0x90,0);
+
 #if HARDWARE==1
  #define HARD_V1
 #else
@@ -121,6 +123,7 @@ SBIT(DirR,0x90,7);
     		    P3_DIR_PU |= 0x19; LED=0;
 
 uint8_t ledcnt=254,ledfsm=0;
+uint8_t ledpwm=0;
 
 __code	uint8_t ledstatus[] ={  2,0x80,          // On
                                 16, 16+1,0x82,   // On-Off 50% Fast / Restart
@@ -137,7 +140,17 @@ __code	uint8_t ledstatus[] ={  2,0x80,          // On
 // Amiga mouse 	    Y0 	X0 	Y1 	X1 	-> TBC
 
 void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
+
+ 	// DEBUGP=1;
+
 	timer++;
+
+	__asm	
+		mov a,_ledpwm
+		rr a
+		mov _ledpwm,a
+	__endasm;
+	if (ledpwm&1) {LED=0;} else {LED=1;}
 
 	if (qmouse_mode)
 	{
@@ -209,6 +222,8 @@ void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 		}
 	 } else {p.m.ydelta=0;}
 	}
+
+  // DEBUGP=0;
 }
 
 #if 0 //TODO
@@ -374,7 +389,8 @@ again:
 		  if (!ledcnt)
 			 {
 			  ledcnt=(ledstatus[ledfsm]&0x7E)*2+2;
-			  if (ledstatus[ledfsm]&1) LED=1; else LED=0;
+			  //if (ledstatus[ledfsm]&1) LED=1; else LED=0;
+			  if (ledstatus[ledfsm]&1) ledpwm=0; else ledpwm=0x01;
 			  ledfsm++; if (ledstatus[ledfsm]&0x80) ledfsm=ledstatus[ledfsm]&0x7F;
 			 };
 #endif
