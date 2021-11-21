@@ -1,7 +1,7 @@
 # Doc
 
-Photo gallery :
+[Photo Gallery](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/gallery.md)
 
-Reflash - Linux
+[Reflash adapter - Linux](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/ISP-Prog2.md)
 
-Reflash - Windows
+[Reflash adapter - Windows](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/ISP-Prog.md)

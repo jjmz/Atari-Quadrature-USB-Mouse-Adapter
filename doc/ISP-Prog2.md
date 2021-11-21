@@ -6,7 +6,7 @@ Reflashing the adapter
 ![v2-isp-alt](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/v2-isp-alt.jpg)
 
 (If 'download cfg' was not P1.5, then the pins to short are the test pins on the PCB.
-See ...)
+See [v2-isp](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/v2-isp.jpg) )
 
 2/ Connect USB to USB on a computer (you need a USB Male-to-Male cable, or an adapter)
 
@@ -33,5 +33,5 @@ BTVER: V2.40.
 Flash done.
 ```
 
-Or use the Windows 'wchisptool'
-(See ...)
+Or use the Windows 'wchisptool' [ISP-Prog](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/ISP-Prog.md)
+
