@@ -12,8 +12,8 @@ Linux detects CH554 in boot mode as idVendor=4348, idProduct=55e0
 (dmesg output example)
 
 >> [603279.266447] usb 3-9: new full-speed USB device number 7 using xhci_hcd
->> [603279.415593] usb 3-9: New USB device found, idVendor=4348, idProduct=55e0, bcdDevice= 2.40
->> [603279.415596] usb 3-9: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+   [603279.415593] usb 3-9: New USB device found, idVendor=4348, idProduct=55e0, bcdDevice= 2.40
+   [603279.415596] usb 3-9: New USB device strings: Mfr=0, Product=0, SerialNumber=0
 
 
 3/ Use "python3 ch55xtool.py -f firmware.bin"
