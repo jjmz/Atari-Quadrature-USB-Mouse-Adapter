@@ -546,7 +546,7 @@ uint8_t   CtrlClearEndpStall( uint8_t endp )
 * Return         : ERR_SUCCESS      成功
                    其他
 *******************************************************************************/
-uint8_t   CtrlSetUsbIntercace( uint8_t cfg )                   
+uint8_t   CtrlSetUsbInterface( uint8_t cfg )                   
 {
     CopySetupReqPkg( SetupSetUsbInterface );
     if(HubLowSpeed)                                                               //HUB下低速设备
@@ -991,7 +991,7 @@ USBDevEnum:
                     s = CtrlSetUsbConfig( cfg );                            // 设置USB设备配置
                     if ( s == ERR_SUCCESS )
                     {									
-                        s = CtrlSetUsbIntercace(cfg);
+                        s = CtrlSetUsbInterface(cfg);
 //                         if(s == ERR_SUCCESS){
                                                                            //需保存端点信息以便主程序进行USB传输
 			s = CtrlGetXPrinterReport1( );                    //打印机类命令
@@ -1070,7 +1070,8 @@ USBDevEnum:
 								printstr( "USB_DEV_CLASS_HID Ready\n" );
 #endif																
 								ThisUsbDev.DeviceType = USB_DEV_CLASS_HID;//复合HID设备															
-                            }															
+                            }
+                            SetBootProto();															
 #if DE_PRINTF													
                             printstr( "USB-Mouse Ready\n" );
 #endif													
@@ -1243,6 +1244,7 @@ uint8_t   EnumAllRootDevice( void )
 	}
     return( ERR_SUCCESS );
 }
+#ifdef USBHUBSUPPORT
 /*******************************************************************************
 * Function Name  : InitDevOnHub
 * Description    : Initialize the secondary USB device after enumerating the external HUB
@@ -1581,6 +1583,8 @@ uint8_t   EnumAllHubPort( void )
 	}
     return( ERR_SUCCESS );
 }
+#endif
+
 /*******************************************************************************
 *Function Name: SearchTypeDevice
 *Description: Search for the port number where the specified type of device is located on each port of ROOT-HUB and external HUB. If the output port number is 0xFFFF, it will not be found

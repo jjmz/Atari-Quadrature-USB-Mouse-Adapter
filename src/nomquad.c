@@ -324,7 +324,7 @@ again:
 			{
 				if (ThisUsbDev.DeviceType == DEV_TYPE_MOUSE)
 				{
-					SetBootProto();
+					// SetBootProto();
 					
 					memset(&p,0,sizeof(p));
 					if (DevTable[0]!=0xFF)
@@ -372,12 +372,14 @@ again:
 			}
         }
 
+#ifdef USBHUBSUPPORT
 		s = EnumAllHubPort( );                                             
 		if ( s != ERR_SUCCESS ){                                             
 #if DE_PRINTF
 			printstr( "EnumAllHubPort err = ");printhex2(s);printlf();
 #endif
 		}
+#endif
 
 // pollHIDdevice ?
 		if (timer&0x80)		// 15874/128 -> ~125hz (8ms)

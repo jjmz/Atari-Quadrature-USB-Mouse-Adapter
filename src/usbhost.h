@@ -112,7 +112,7 @@ uint8_t   CtrlSetUsbConfig( uint8_t cfg );                 // 设置USB设备配
 uint8_t   CtrlClearEndpStall( uint8_t endp );              // 清除端点STALL
 
 #ifndef DISK_BASE_BUF_LEN
-uint8_t   CtrlSetUsbIntercace( uint8_t cfg );              // 设置USB设备接口 
+uint8_t   CtrlSetUsbInterface( uint8_t cfg );              // 设置USB设备接口 
 uint8_t   CtrlGetHIDDeviceReport( uint8_t infc );          // HID类命令，SET_IDLE和GET_REPORT 
 uint8_t   CtrlGetHubDescr( void );                       // 获取HUB描述符,返回在TxBuffer中
 uint8_t   HubGetPortStatus( uint8_t HubPortIndex );        // 查询HUB端口状态,返回在TxBuffer中
