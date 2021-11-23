@@ -8,7 +8,7 @@ Some photos/pics/snapshots :
 ![v2-falcon1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/v2-falcon.jpg)
 ![v2-falcon2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/v2-falcon2.jpg)
 
-![working-mice](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/working-miche.jpg)
+![working-mice](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/working-mice.jpg)
 
 ![STL](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/freecad-stl.png)
 
