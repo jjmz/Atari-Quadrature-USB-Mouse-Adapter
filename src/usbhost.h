@@ -98,7 +98,7 @@ void    SetHostUsbAddr( uint8_t addr );                 // 设置USB主机当前
 void    SetUsbSpeed( uint8_t FullSpeed );               // 设置当前USB速度
 void    ResetRootHubPort( );                          // 检测到设备后,复位相应端口的总线,为枚举设备准备,设置为默认为全速
 uint8_t   EnableRootHubPort( );                         // 使能ROOT-HUB端口,相应的bUH_PORT_EN置1开启端口,设备断开可能导致返回失败
-void    SelectHubPort( uint8_t HubPortIndex );// HubPortIndex=0选择操作指定的ROOT-HUB端口,否则选择操作指定的ROOT-HUB端口的外部HUB的指定端口
+void    SelectHubPort( );// HubPortIndex=0选择操作指定的ROOT-HUB端口,否则选择操作指定的ROOT-HUB端口的外部HUB的指定端口
 uint8_t   WaitUSB_Interrupt( void );                    // 等待USB中断
 // CH554传输事务,输入目的端点地址/PID令牌,同步标志,以20uS为单位的NAK重试总时间(0则不重试,0xFFFF无限重试),返回0成功,超时/出错重试
 uint8_t   USBHostTransact( uint8_t endp_pid, uint8_t tog, uint16_t timeout );  // endp_pid: 高4位是token_pid令牌, 低4位是端点地址
@@ -119,8 +119,8 @@ uint8_t   HubGetPortStatus( uint8_t HubPortIndex );        // 查询HUB端口状
 uint8_t   HubSetPortFeature( uint8_t HubPortIndex, uint8_t FeatureSelt );  // 设置HUB端口特性
 uint8_t   HubClearPortFeature( uint8_t HubPortIndex, uint8_t FeatureSelt );  // 清除HUB端口特性
 uint8_t   CtrlGetXPrinterReport1( void ) ;               //打印机类命令
-uint8_t   AnalyzeHidIntEndp( __xdata uint8_t *buf, uint8_t HubPortIndex);           // 从描述符中分析出HID中断端点的地址
-uint8_t   AnalyzeBulkEndp( __xdata uint8_t *buf, uint8_t HubPortIndex ) ;           //分析出批量端点
+uint8_t   AnalyzeHidIntEndp( __xdata uint8_t *buf);           // 从描述符中分析出HID中断端点的地址
+uint8_t   AnalyzeBulkEndp( __xdata uint8_t *buf) ;           //分析出批量端点
 uint8_t   TouchStartAOA( void );                         // 尝试AOA启动
 uint8_t   EnumAllRootDevice( void );                     // 枚举所有ROOT-HUB端口的USB设备
 uint8_t   InitDevOnHub(uint8_t HubPortIndex );             // 初始化枚举外部HUB后的二级USB设备

@@ -19,7 +19,7 @@ __code uint8_t  SetupSetUsbAddr[] = { USB_REQ_TYP_OUT, USB_SET_ADDRESS, USB_DEVI
 __code uint8_t  SetupSetUsbConfig[] = { USB_REQ_TYP_OUT, USB_SET_CONFIGURATION, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 __code uint8_t  SetupSetUsbInterface[] = { USB_REQ_RECIP_INTERF, USB_SET_INTERFACE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 __code uint8_t  SetupClrEndpStall[] = { USB_REQ_TYP_OUT | USB_REQ_RECIP_ENDP, USB_CLEAR_FEATURE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-__code uint8_t  SetupGetHubDescr[] = { HUB_GET_HUB_DESCRIPTOR, HUB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_HUB, 0x00, 0x00, sizeof( USB_HUB_DESCR ), 0x00 };
+// __code uint8_t  SetupGetHubDescr[] = { HUB_GET_HUB_DESCRIPTOR, HUB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_HUB, 0x00, 0x00, sizeof( USB_HUB_DESCR ), 0x00 };
 __code uint8_t  SetupSetHIDIdle[]= { 0x21,HID_SET_IDLE,0x00,0x00,0x00,0x00,0x00,0x00 };
 __code uint8_t  SetupGetHIDDevReport[] = { 0x81, USB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_REPORT, 0x00, 0x00, 0xFF, 0x00 };
 __code uint8_t  GetProtocol[] = { 0xc0,0x33,0x00,0x00,0x00,0x00,0x02,0x00 };
@@ -56,7 +56,7 @@ EMPTY
 uint8_t Set_Port = 0;
 
 __xdata _RootHubDev ThisUsbDev;                                                   //ROOT
-__xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];                               
+// __xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];                               
 
 __bit FoundNewDev;
 
@@ -234,13 +234,8 @@ inline uint8_t add_sat255(uint8_t v, uint8_t i)
  return s;
 }
 #else
-inline uint8_t add_sat255(uint8_t v, uint8_t i)
-{
-	//if ((v+i)>=0x100) return 255;
-	uint8_t s=v+i;
-	if (CY) return 255;
-	return s;
-}
+//if ((v+i)>=0x100) return 255;
+#define add_sat255(v,i) { uint8_t s=v+i; if (CY) s=255; v=s; }
 #endif
 
 inline void xdatacpy(__code uint8_t *src, __data uint8_t *dest,uint8_t nb)
@@ -404,15 +399,15 @@ again:
 
 			i = (uint8_t)( loc >> 8 );
 			len = (uint8_t)loc;
-			SelectHubPort( len ); 
-			endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0];     
+			SelectHubPort(); 
+			endp = /*len ? DevOnHubPort[len-1].GpVar[0] : */ ThisUsbDev.GpVar[0];     
 			if ( endp & USB_ENDP_ADDR_MASK ){                               
 				s = USBHostTransact( USB_PID_IN << 4 | endp & 0x7F, endp & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
 
 				if ( s == ERR_SUCCESS ){
 					endp ^= 0x80;                                         
-					if ( len ) DevOnHubPort[len-1].GpVar[0] = endp;            
-					else ThisUsbDev.GpVar[0] = endp;
+					// if ( len ) DevOnHubPort[len-1].GpVar[0] = endp;            
+					/*else*/ ThisUsbDev.GpVar[0] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
 #if DE_PRINTF
@@ -444,7 +439,7 @@ again:
 							              else {p.m.xcnt=(i-p.m.xcnt); }
 							}
 						 else
-						    p.m.xcnt=add_sat255(p.m.xcnt,i);
+						    add_sat255(p.m.xcnt,i);
 						  						    
 						 uint16_t delta=p.m.minf+p.m.smul*p.m.xcnt;
 						 if (delta>=p.m.maxf) delta=p.m.maxf;
@@ -461,7 +456,7 @@ again:
 							              else {p.m.ycnt=(i-p.m.ycnt); }
 							}
 						 else						  
-						    p.m.ycnt=add_sat255(p.m.ycnt,i);						  
+						    add_sat255(p.m.ycnt,i);						  
 						    
 						 uint16_t delta=p.m.minf+p.m.smul*p.m.ycnt;
 						 if (delta>=p.m.maxf) delta=p.m.maxf;
@@ -495,15 +490,15 @@ again:
 
 			i = (uint8_t)( loc >> 8 );
 			len = (uint8_t)loc;
-			SelectHubPort( len ); 
-			endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0];     
+			SelectHubPort(); 
+			endp = /* len ? DevOnHubPort[len-1].GpVar[0] : */ ThisUsbDev.GpVar[0];     
 			if ( endp & USB_ENDP_ADDR_MASK ){                               
 				s = USBHostTransact( USB_PID_IN << 4 | endp & 0x7F, endp & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
 
 				if ( s == ERR_SUCCESS ){
 					endp ^= 0x80;                                         
-					if ( len ) DevOnHubPort[len-1].GpVar[0] = endp;            
-					else ThisUsbDev.GpVar[0] = endp;
+					//if ( len ) DevOnHubPort[len-1].GpVar[0] = endp;            
+					/*else*/ ThisUsbDev.GpVar[0] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
 #if DE_PRINTF
