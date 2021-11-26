@@ -37,7 +37,7 @@ uint8_t cpval;
 
 uint8_t cond_set_io(uint8_t idx)
 {
-	uint8_t ret=0xFF,rxval=RxBuffer[idx&0xF];
+	uint8_t rxval=RxBuffer[idx&0xF];
 	switch (idx>>4)
      {   case 0x0:
 	      if (rxval==cpval) return 0; else return 1;

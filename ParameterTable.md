@@ -1,24 +1,28 @@
-DataFlash Offset:
+**WAS** DataFlash Offset:
+**NOW** Memory Base : 0x3700 (i.e. 256 bytes before end of file)
 
     #0 (x02) - mouse DPI divider / TODO : bit 7 for Atari/Amiga switch
     #1 (x03) - step multiplier
     #2 (x08) - minimal increment
     #3 (x20) - maximal increment
+    #4 -> #15 - to be used for buttons
 
-    #4 - start of joystick table
+    #16 - start of joystick table
+        - one joystick entry => 20 bytes
 
 Joystick Table
 
-    #0 (0x0F) - offset to next table entry / 0xFF for last
+    #0-1 (0x0000) - Vendor ID (0 for default entry ,i.e. first one , 0xFFFF for unused)
+    #2-3 (0x0000) - Product ID (0 for default entry, i.e first one)
 
-    #1-2 (0x0000) - Vendor ID (0 for default entry)
-    #3-4 (0x0000) - Product ID (0 for default entry)
-
-    #5-6 (0x11-0x40) condition/value for Up
-    #7-8 (0x21-0xC0) condition/value for Down
-    #9-A (0x10-0x40) condition/value for Left
-    #B-C (0x20-0xC0) condition/value for Right
-    #D-E (0x33-0xFF) condition/value for Fire Button 1 (multiple joystick buttons will trigger Fire)
+    #4-5   (0x11-0x40) condition/value for Up
+    #6-7   (0x21-0xC0) condition/value for Down
+    #8-9   (0x10-0x40) condition/value for Left
+    #10-11 (0x20-0xC0) condition/value for Right
+    #12-13 (0x33-0xFF) condition/value for Fire Button 1 (multiple joystick buttons can trigger Fire)
+    #14-15 (0xFF-0xFF) condition/value for Fire Button 2 (multiple joystick buttons can trigger Fire)
+    #16-17 (0xFF-0xFF) condition/value for Fire Button 3 (multiple joystick buttons can trigger Fire)
+    #18-19 (0xFF-0xFF) not used
 
 Conditions encoding :
 
@@ -42,7 +46,3 @@ Some examples :
 - Logitech ATK3 - ???? ???? - X,Y @ 0x01/0x00, buttons @ 0x03
 
     cf Default Config
-
-DataFlash can be programmed independantly from the firmware code using the WCHISPTOOL.EXE
-(Have not found a Linux program to modify DataFlash area)    
-

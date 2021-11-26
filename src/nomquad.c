@@ -19,7 +19,6 @@ __code uint8_t  SetupSetUsbAddr[] = { USB_REQ_TYP_OUT, USB_SET_ADDRESS, USB_DEVI
 __code uint8_t  SetupSetUsbConfig[] = { USB_REQ_TYP_OUT, USB_SET_CONFIGURATION, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 __code uint8_t  SetupSetUsbInterface[] = { USB_REQ_RECIP_INTERF, USB_SET_INTERFACE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 __code uint8_t  SetupClrEndpStall[] = { USB_REQ_TYP_OUT | USB_REQ_RECIP_ENDP, USB_CLEAR_FEATURE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-// __code uint8_t  SetupGetHubDescr[] = { HUB_GET_HUB_DESCRIPTOR, HUB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_HUB, 0x00, 0x00, sizeof( USB_HUB_DESCR ), 0x00 };
 __code uint8_t  SetupSetHIDIdle[]= { 0x21,HID_SET_IDLE,0x00,0x00,0x00,0x00,0x00,0x00 };
 __code uint8_t  SetupGetHIDDevReport[] = { 0x81, USB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_REPORT, 0x00, 0x00, 0xFF, 0x00 };
 __code uint8_t  GetProtocol[] = { 0xc0,0x33,0x00,0x00,0x00,0x00,0x02,0x00 };
@@ -35,10 +34,11 @@ __code __at (0x3FF8) uint8_t DevInfo[8];
 
 #include "joystick-table.h"
 
-__code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//Mouse Params (16 bytes)
+__code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//	Mouse Params (16 bytes)
                                               0x00,0x00, 0x00,0x00,			// Spare - Future Button 1/2 ?
 											  0x00,0x00, 0x00,0x00,			// Spare - Button 3 ?
 											  0x00,0x00, 0x00,0x00,			// Spare
+// Joystick table - 12 entries, first one is default											  
 DEFAULT_JOYSTICK	\
 TWINSHOCK			\
 EIGHTBITDO_SN30		\
@@ -54,10 +54,7 @@ EMPTY
 };
 
 uint8_t Set_Port = 0;
-
 __xdata _RootHubDev ThisUsbDev;                                                   //ROOT
-// __xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];                               
-
 __bit FoundNewDev;
 
 typedef struct  {
@@ -77,7 +74,8 @@ typedef struct  {
 	uint8_t p1idx,p1mask;	//2 - Button 1 (L)
 	uint8_t p2idx,p2mask;	//2 - Button 2 (R)
 	uint8_t p3idx,p3mask;	//2 - button 3 (M)
-} joystick_params;			// -> 2*7 -> 14b
+	uint8_t dummy1,dummy2;  // unused positions
+} joystick_params;			// -> 2*8 -> 16b => same as mouse_params
 
 __bit qmouse_mode;
 __bit qmouse_amiga;
@@ -98,26 +96,22 @@ SBIT(DirD,0x90,5);
 SBIT(DirL,0x90,6);
 SBIT(DirR,0x90,7);
 
-SBIT(DEBUGP,0x90,0);
 
 #if HARDWARE==1
- #define HARD_V1
-#else
- #define HARD_V2
-#endif
-
-#ifdef HARD_V1
-	SBIT(BUTT_L,0xB0,1);		// P3_1
-	SBIT(BUTT_R,0xB0,0);		// P3_0
+#define HARD_V1
+SBIT(BUTT_L,0xB0,1);		// P3_1
+SBIT(BUTT_R,0xB0,0);		// P3_0
 #define INIT_P3 P3        |= 0x03; \
     		    P3_MOD_OC |= 0x03; /* P3.1,0 Open Collector Output */ \
     		    P3_DIR_PU |= 0x03;
+#define PWMLED(a)
 #else
-	SBIT(BUTT_R,0xB0,3);		// P3_3 (Right button  - DB9-9)
-	SBIT(BUTT_L,0xB0,0);		// P3_0 (Left button   - DB9-6) = Fire 
-	SBIT(BUTT_M,0xB0,4);		// P3_4 (middle button - DB9-5)
-	SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
-							    // P3_1 available, as UART TX, non-alternate setting
+#define HARD_V2
+SBIT(BUTT_R,0xB0,3);		// P3_3 (Right button  - DB9-9)
+SBIT(BUTT_L,0xB0,0);		// P3_0 (Left button   - DB9-6) = Fire 
+SBIT(BUTT_M,0xB0,4);		// P3_4 (middle button - DB9-5)
+SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
+						    // P3_1 available, as UART TX, non-alternate setting
 #define INIT_P3 P3        |= 0x19;  \
     		    P3_MOD_OC |= 0x1D;  \
     		    P3_DIR_PU |= 0x19; LED=0;
@@ -133,24 +127,34 @@ __code	uint8_t ledstatus[] ={  2,0x80,          // On
 #define FSM_MOUSE     2
 #define FSM_JOYSTICK  5
 #define FSM_JOYSTICK2 8
+
+#define PWMLED(a) {a}
 #endif
 
 //              P1.  4   5   6   7
 // Atari ST mouse 	X1 	X0 	Y0 	Y1 	-> Tested OK
 // Amiga mouse 	    Y0 	X0 	Y1 	X1 	-> TBC
 
-void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
+// If needed - logic analyser - time spent in Timer Interrupt
+// SBIT(DEBUGP,0x90,0);
 
- 	// DEBUGP=1;
+void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
+// DEBUGP=1;
 
 	timer++;
 
+#ifdef HARD_V2
 	__asm	
 		mov a,_ledpwm
 		rr a
 		mov _ledpwm,a
+		rrc a
+		cpl C
+		mov _LED,C
 	__endasm;
-	if (ledpwm&1) {LED=0;} else {LED=1;}
+	// i.e. rotate ledpwm right &
+	// (ledpwm&1)->C , if C=1 {LED=0;} else {LED=1;}
+#endif
 
 	if (qmouse_mode)
 	{
@@ -223,25 +227,22 @@ void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 	 } else {p.m.ydelta=0;}
 	}
 
-  // DEBUGP=0;
+// DEBUGP=0;
 }
 
-#if 0 //TODO
-inline uint8_t add_sat255(uint8_t v, uint8_t i)
-{
- __asm
- __endasm;
- return s;
-}
-#else
 //if ((v+i)>=0x100) return 255;
 #define add_sat255(v,i) { uint8_t s=v+i; if (CY) s=255; v=s; }
-#endif
 
 inline void xdatacpy(__code uint8_t *src, __data uint8_t *dest,uint8_t nb)
 {
 	for (uint8_t i=nb;i!=0;i--) *dest++=*src++;
 }
+
+#if DE_PRINTF
+#define PRINT(a) a
+#else
+#define PRINT(a)
+#endif
 
 void main( )
 {
@@ -298,12 +299,9 @@ again:
             s = AnalyzeRootHub( );                                              
             if ( s == ERR_USB_CONNECT ) FoundNewDev = 1;						
 			if ( s == ERR_USB_DISCON ) 	{
-#if DE_PRINTF								
-                printstr( "Disconnect\n");
-#endif		
-#ifdef HARD_V2
-					ledfsm=FSM_NODEV;
-#endif		
+                PRINT(printstr( "Disconnect\n");)
+				PWMLED(ledfsm=FSM_NODEV;)
+				qmouse_mode=0;
 			}
         }
         if ( FoundNewDev ){
@@ -311,9 +309,7 @@ again:
 //          mDelaymS( 200 );
             s = EnumAllRootDevice( );                                       
             if ( s != ERR_SUCCESS ){						
-#if DE_PRINTF
-                printstr( "EnumAllRootDev err = ");printhex2(s);printlf();					
-#endif
+            PRINT({printstr( "EnumAllRootDev err = ");printhex2(s);printlf();})
             }
 			else
 			{
@@ -328,53 +324,37 @@ again:
 	  					 p.m.minf=DevTable[2]; p.m.maxf=DevTable[3];}
 					else 
 	 					{p.m.sdiv=1; p.m.smul=2; p.m.minf=0; p.m.maxf=250;}
-#if DE_PRINTF
-					printstr("Mouse Params : "); printx2(p.m.sdiv); printx2(p.m.smul); 
-	                printx2(p.m.minf); printx2(p.m.maxf); printlf();
-#endif
-#ifdef HARD_V2
-					ledfsm=FSM_MOUSE;
-#endif					
+
+					PRINT({printstr("Mouse Params : "); printx2(p.m.sdiv); printx2(p.m.smul);})
+	                PRINT({printx2(p.m.minf); printx2(p.m.maxf); printlf();})
+
+					PWMLED(ledfsm=FSM_MOUSE;)
 					qmouse_mode=1;
 				}
 
 				if (ThisUsbDev.DeviceType == DEV_TYPE_JOYSTICK)
 				{
 					qmouse_mode=0;		// Stops Mouse Quadrature in Int
-#ifdef HARD_V2
-					ledfsm=FSM_JOYSTICK;
-#endif
+					PWMLED(ledfsm=FSM_JOYSTICK;)
 
-					xdatacpy(&DevTable[IDX_JOYSTICK+4],&p.j.pUidx,14);
+					xdatacpy(&DevTable[IDX_JOYSTICK+4],&p.j.pUidx,16);			// Copy the default entry (first)
 
-					for(i=(IDX_JOYSTICK+INC_JOYSTICK);i!=0;i+=INC_JOYSTICK)
+					for(i=(IDX_JOYSTICK+INC_JOYSTICK);i!=0;i+=INC_JOYSTICK)		// !!! i from 16+20 to 16+240=>0 (i is uint_8)
 					{
 					 if (*(uint16_t *)&DevTable[i]==ThisUsbDev.DeviceVID)
 					  if (*(uint16_t *)&DevTable[(uint8_t)(i+2)]==ThisUsbDev.DevicePID)
 						{								
-#ifdef HARD_V2
-							ledfsm=FSM_JOYSTICK2;
-#endif								
-							xdatacpy(&DevTable[(uint8_t)(i+4)],&p.j.pUidx,14);
+							PWMLED(ledfsm=FSM_JOYSTICK2;)
+							xdatacpy(&DevTable[(uint8_t)(i+4)],&p.j.pUidx,16);
 						}					 
 					}
-#if DE_PRINTF					
-					printstr("Joystick Params : "); printlf();
-					for(i=0;i!=12;i++) printx2((&p.j.pUidx)[i]); printlf();
-#endif					
+					PRINT({printstr("Joystick Params : "); printlf();})
+					PRINT({for(i=0;i!=12;i++) printx2((&p.j.pUidx)[i]); printlf();})
 				}
 
 			}
         }
 
-#ifdef USBHUBSUPPORT
-		s = EnumAllHubPort( );                                             
-		if ( s != ERR_SUCCESS ){                                             
-#if DE_PRINTF
-			printstr( "EnumAllHubPort err = ");printhex2(s);printlf();
-#endif
-		}
-#endif
 
 // pollHIDdevice ?
 		if (timer&0x80)		// 15874/128 -> ~125hz (8ms)
@@ -410,13 +390,9 @@ again:
 					/*else*/ ThisUsbDev.GpVar[0] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
-#if DE_PRINTF
-						printstr("RX: ");
-						for ( i = 0; i != len; i ++ ){
-							printx2(RxBuffer[i]);
-						}
-						printlf();
-#endif
+						PRINT(printstr("RX: ");)
+						PRINT({for ( i = 0; i != len; i ++ ) printx2(RxBuffer[i]); printlf();})
+
 						// TODO : modif depending on mouse button table...
 						i=RxBuffer[0];		// 0->Left,1->Right,2->Middle
 						if (i&1) BUTT_L=0; else BUTT_L=1;
@@ -464,23 +440,18 @@ again:
 						}
 
 						EA=1;
-#if DE_PRINTF
-						for(i=0;i!=16;i++) printx2((&p.m.xcnt)[i]); printlf();
-#else
+						PRINT({for(i=0;i!=16;i++) printx2((&p.m.xcnt)[i]); printlf();})
+#if !DE_PRINTF
 						mDelayuS(900);
-#endif						 
+#endif						
 					}
 				}
 				else if ( s != ( USB_PID_NAK | ERR_USB_TRANSFER ) ) {
-#if DE_PRINTF
-					printstr("Err ");printhex2(s);
-#endif
+					PRINT({printstr("Err ");printhex2(s);})
 				}
 			}
 			else {
-#if DE_PRINTF
-				printstr("Mouse no interrupt endpoint\n");
-#endif
+				PRINT(printstr("Mouse no interrupt endpoint\n");)
 			}
 			SetUsbSpeed( 1 );                                                 // The default is full speed
 		  }
@@ -501,15 +472,15 @@ again:
 					/*else*/ ThisUsbDev.GpVar[0] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
-#if DE_PRINTF
-						printstr("RX: ");
-						for ( i = 0; i != len; i ++ ) { printx2(RxBuffer[i]); }
-						printlf();
-	#define CH(a) putch(a);
-#else
-	#define CH(a)
-#endif
+						PRINT({printstr("RX: "); for ( i = 0; i != len; i ++ ) { printx2(RxBuffer[i]); } printlf();})
 
+// Ugly...
+
+#if DE_PRINTF
+ #define CH(b) putch(b);
+#else
+ #define CH(b)
+#endif
 #define COND(idx,val,io,c) { cpval=val; i=cond_set_io(idx); if(i==0) {io=0;CH(c);}; if (i==1) io=1; }
 
 // Up/Down/Left/Right
@@ -530,15 +501,11 @@ again:
 					}
 				}
 				else if ( s != ( USB_PID_NAK | ERR_USB_TRANSFER ) ) {
-#if DE_PRINTF
-					printstr("Err ");printhex2(s);                
-#endif
+					PRINT({printstr("Err ");printhex2(s);})
 				}
 			}
 			else {
-#if DE_PRINTF
-				printstr("Joystick no interrupt endpoint\n");
-#endif
+				PRINT(printstr("Joystick no interrupt endpoint\n");)
 			}
 			SetUsbSpeed( 1 );                                                 // The default is full speed
 		  }
