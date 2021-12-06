@@ -4,18 +4,18 @@ I think you can have 3 cases when powering the CH55x :
 
 1. Unprogrammed CH55x
 
-When the CH55x is unprogrammed, it will by default go in bootloader mode, with no specific pin to short.
+   When the CH55x is unprogrammed, it will by default go in bootloader mode, with no specific pin to short.
 
 2. Factory default (after 1st flashing, if nothing is done regarding download cfg), or if P3.6 was selected
 
-To go in bootloader mode, then a __temporary__ connection of P3.6 with VCC is needed while powering the chip.
-This __SHOULD NOT__ be the default for this project, as connecting a full-speed device to the USB would
-cause the CH55x to enter bootloader mode too (Full-speed devices have a pull-up connected to D+).
+   To go in bootloader mode, then a __temporary__ connection of P3.6 with VCC is needed while powering the chip.
+   This __SHOULD NOT__ be the default for this project, as connecting a full-speed device to the USB would cause the CH55x to enter bootloader mode too (Full-speed devices have a pull-up connected to D+).
+   On the USB adapter, VCC and P3.6 are accessible on two test pads, near the USB connector (check the photos with the tweezers)
 
-3. Alternative download cfg : via P1.5 [^1]
+3. Alternative download cfg : via P1.5 - info found here[^1]
 
-This is the configuration I am using - note that P1.5 has to be connected to GND - both pins are
-present on the DB-9 connector : P1.5 is pin 2 , GND is pin 8.
+   This is the configuration I am using - note that P1.5 has to be connected to GND - both pins are present on the DB-9 connector : P1.5 is pin 2 , GND is pin 8.
+   You can use a short wire, or even a paper clip to connect those 2 pins, and can even leave it after powering the adapter, while reflashing.
 
 ## Windows WCH utility
 
