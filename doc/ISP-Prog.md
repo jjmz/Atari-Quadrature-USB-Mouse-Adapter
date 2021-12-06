@@ -45,4 +45,4 @@ Some Misc photos :
 
 References :
 
-[^1] : http://rabid-inventor.blogspot.com/2020/05/getting-started-with-ch55x.html
+[^1]: http://rabid-inventor.blogspot.com/2020/05/getting-started-with-ch55x.html
