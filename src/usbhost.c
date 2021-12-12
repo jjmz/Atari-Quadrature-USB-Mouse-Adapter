@@ -740,7 +740,7 @@ USBDevEnum:
                                 if ( if_cls2 == 2 )
                                     { ThisUsbDev.DeviceType = DEV_TYPE_MOUSE;
                                       ThisUsbDev.GpVar[0]=ThisUsbDev.GpVar[1];
-                                      SetBootProto();							
+                                      SetBootProto(1);							
 #if DE_PRINTF						  
 								      printstr( "MOUSE Interface : 2\n" );
 #endif                                      
@@ -765,7 +765,7 @@ USBDevEnum:
 #endif																
 								ThisUsbDev.DeviceType = USB_DEV_CLASS_HID;//复合HID设备															
                             }
-                            SetBootProto();															
+                            SetBootProto(0);															
 #if DE_PRINTF													
                             printstr( "USB-Mouse Ready\n" );
 #endif													
@@ -874,7 +874,7 @@ uint16_t  SearchTypeDevice( uint8_t type )
     return( 0xFFFF );
 }
 
-uint8_t SetBootProto(void)
+uint8_t SetBootProto(uint8_t intf)
 {
     uint8_t tmp[]= {0x21,0x0b,0x00,0x00,0x00,0x00,0x00,0x00};
     uint8_t len,s;
@@ -883,6 +883,7 @@ uint8_t SetBootProto(void)
 	{
 		((__xdata uint8_t *)pSetupReq)[ s ] = tmp[s];
 	}
+    ((__xdata uint8_t *)pSetupReq)[ 4 ]=intf;
     s = HostCtrlTransfer( Com_Buffer, &len );                                     // 执行控制传输
     if ( s != ERR_SUCCESS )
     {
