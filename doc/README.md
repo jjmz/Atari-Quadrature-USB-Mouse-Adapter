@@ -10,15 +10,18 @@
 
 - LED OFF :
 	Problem : CH554 not programmed, or in boot mode ?
+	
 	Boot mode is entered if the ISP pins are shorted
+	
 	It can be either P3.6 to VCC , or P1.5 to GND
-	Note that P3.6 to VCC can happen if a full-speed device if connected to USB, thus the default on this project should be P1.5.
+	
+	Note that P3.6 to VCC can happen if a full-speed device is connected to USB, thus the default on this project should really be P1.5. Please check that you are using this setting in the Windows WCH Flashing tool.
 
 - LED ON, still :
 	Program running, no recognized device on USB
 
 - LED Blinking regularly :
-	Mouse mode
+	Mouse detected - mouse mode
 
 - LED Pulsing : 1 pulse
 	Joystick detected - default config (i.e. no specific config found)
