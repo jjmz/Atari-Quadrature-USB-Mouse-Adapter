@@ -1,6 +1,6 @@
 # Doc
 
-[See documentation](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/Readme.md)
+[See documentation](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/README.md)
 
 [Photo Gallery](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/gallery.md)
 
