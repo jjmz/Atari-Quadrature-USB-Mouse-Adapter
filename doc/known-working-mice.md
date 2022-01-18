@@ -11,5 +11,12 @@ Tested :
 | Dell (MS111-L ?) | 046d:c05a  | Logitech, Inc. M90/M100 Optical Mouse |
 | Logitech M185 | 046d:c542 | Logitech, Inc. Wireless Receiver |
 
+Reported OK too by users :
+| Name | USB IDs | Name (Linux) |
+| --- | --- | --- |
+| Logitech M720 (Dongle / BT mouse) | | |
+| Wireless (dongle) Logitech T620 touch mouse | | |
+
+
 ![working-mice](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/working-mice.jpg)
 
