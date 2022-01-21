@@ -14,6 +14,7 @@ Tested :
 Reported OK too by users :
 | Name | USB IDs | Name (Linux) |
 | --- | --- | --- |
+| Microsoft sidewinder laser | | |
 | Logitech M720 (Dongle / BT mouse) | | |
 | Wireless (dongle) Logitech T620 touch mouse | | |
 | Logitech RX300 | | |
