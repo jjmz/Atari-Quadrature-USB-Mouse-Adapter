@@ -14,9 +14,11 @@ Tested :
 Reported OK too by users :
 | Name | USB IDs | Name (Linux) |
 | --- | --- | --- |
+| Microsoft sidewinder laser | | |
 | Logitech M720 (Dongle / BT mouse) | | |
 | Wireless (dongle) Logitech T620 touch mouse | | |
-
+| Logitech RX300 | | |
+| Genius GM-050014 U/A  Traveller 100 | | |
 
 ![working-mice](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/v2-platformio/doc/working-mice.jpg)
 
