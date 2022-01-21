@@ -740,7 +740,8 @@ USBDevEnum:
                                 if ( if_cls2 == 2 )
                                     { ThisUsbDev.DeviceType = DEV_TYPE_MOUSE;
                                       ThisUsbDev.GpVar[0]=ThisUsbDev.GpVar[1];
-                                      SetBootProto(1);							
+                                      SetBootProto(1);
+                                      SetBootProto(0);							// Dell BIOS calls this with ifc set to 0...
 #if DE_PRINTF						  
 								      printstr( "MOUSE Interface : 2\n" );
 #endif                                      

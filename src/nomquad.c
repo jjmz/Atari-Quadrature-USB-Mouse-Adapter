@@ -34,6 +34,8 @@ __code __at (0x3FF8) uint8_t DevInfo[8];
 
 #include "joystick-table.h"
 
+__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.00 (" __DATE__ ")";
+
 __code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//	Mouse Params (16 bytes)
                                               0x00,0x00, 0x00,0x00,			// Spare - Future Button 1/2 ?
 											  0x00,0x00, 0x00,0x00,			// Spare - Button 3 ?
@@ -116,7 +118,7 @@ SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
     		    P3_MOD_OC |= 0x1D;  \
     		    P3_DIR_PU |= 0x19; LED=0;
 
-uint8_t ledcnt=254,ledfsm=0;
+uint8_t ledcnt=10,ledfsm=0;
 uint8_t ledpwm=0;
 
 __code	uint8_t ledstatus[] ={  2,0x80,          // On
