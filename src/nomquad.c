@@ -34,9 +34,13 @@ __code __at (0x3FF8) uint8_t DevInfo[8];
 
 #include "joystick-table.h"
 
-__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.00 (" __DATE__ ")";
+__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.10 (" __DATE__ ")";
+
 
 __code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//	Mouse Params (16 bytes)
+/*
+__code __at (0x3700) uint8_t DevTable[256]={  0x81,0x01, 0x08,0x20,			//	Mouse Params (16 bytes) / AMIGA
+*/
                                               0x00,0x00, 0x00,0x00,			// Spare - Future Button 1/2 ?
 											  0x00,0x00, 0x00,0x00,			// Spare - Button 3 ?
 											  0x00,0x00, 0x00,0x00,			// Spare
@@ -54,6 +58,7 @@ EMPTY				\
 EMPTY				\
 EMPTY				
 };
+
 
 uint8_t Set_Port = 0;
 __xdata _RootHubDev ThisUsbDev;                                                   //ROOT
@@ -207,9 +212,9 @@ void Timer0_ISR(void) __interrupt (INT_NO_TMR0) __using(1) {
 			cpl	ACC.0
 00002$:
 			rrc	A
-			mov	0x96,c
-			rrc	A
 			mov	0x94,c
+			rrc	A
+			mov	0x96,c
 		  __endasm;
 		  }
 		  else
@@ -257,9 +262,9 @@ void main( )
 	// Port 3 initialisation - depends on Hardware Version
 	INIT_P3;
 
-    P1 &= 0x0F;
-    P1_MOD_OC &= 0x0F; // P1.4,5,6,7 Push-Pull
-    P1_DIR_PU |= 0xF0;
+    P1 &= 0x0D;			// Was 0x0F - added P1.1 low for Reset Kdb
+    P1_MOD_OC &= 0x0D; // P1.4,5,6,7 Push-Pull
+    P1_DIR_PU |= 0xF2;
 
     mDelaymS(50);
 
@@ -275,6 +280,7 @@ void main( )
     TMOD = TMOD & 0xF0 | 0x02; 	// Timer 0 mode 1
     TH0 = 0 - 84; TR0 = 1;		// 1333333/84 -> 15873 Hz
     ET0=1;
+	P1 |= 0x02;					// Reset KBD
     EA=1;
 
     InitUSB_Host( );
