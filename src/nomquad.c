@@ -87,6 +87,7 @@ typedef struct  {
 __bit qmouse_mode;
 __bit qmouse_amiga;
 __bit neg_mvmt,prev_neg_mvmt;
+__bit main_button_state;
 
 union { mouse_params m;
         joystick_params j; } p;
@@ -126,14 +127,16 @@ SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
 uint8_t ledcnt=10,ledfsm=0;
 uint8_t ledpwm=0;
 
-__code	uint8_t ledstatus[] ={  2,0x80,          // On
-                                16, 16+1,0x82,   // On-Off 50% Fast / Restart
-                                16,126+1,0x85,	 // 1-Pulse
-								16,16+1,16,96+1,0x88 }; // 2-Pulses
+__code	uint8_t ledstatus[] ={  2,0x80,                // On
+                                16, 16+1,0x82,         // On-Off 50% Fast / Restart
+                                16,126+1,0x85,	       // 1-Pulse
+								16,16+1,16,96+1,0x88,  // 2-pulses
+								4,4+1,0x8D };          // on-off Fast
 #define FSM_NODEV     0
 #define FSM_MOUSE     2
 #define FSM_JOYSTICK  5
 #define FSM_JOYSTICK2 8
+#define FSM_IDLE	  13
 
 #define PWMLED(a) {a}
 #endif
@@ -264,7 +267,8 @@ void main( )
 
     P1 &= 0x0D;			// Was 0x0F - added P1.1 low for Reset Kdb
     P1_MOD_OC &= 0x0D; // P1.4,5,6,7 Push-Pull
-    P1_DIR_PU |= 0xF2;
+	P1_DIR_PU &= 0x0F; // Initially P1.[47] will be inputs
+    P1_DIR_PU |= 0x02; // Only P1.1 is output
 
     mDelaymS(50);
 
@@ -309,7 +313,9 @@ again:
 			if ( s == ERR_USB_DISCON ) 	{
                 PRINT(printstr( "Disconnect\n");)
 				PWMLED(ledfsm=FSM_NODEV;)
-				qmouse_mode=0;
+				qmouse_mode=0;     
+				P1_DIR_PU &= 0x0F; 		// No dev -> P1.[4-7] are inputs
+				main_button_state=1;
 			}
         }
         if ( FoundNewDev ){
@@ -338,6 +344,7 @@ again:
 
 					PWMLED(ledfsm=FSM_MOUSE;)
 					qmouse_mode=1;
+					P1_DIR_PU |= 0x0F0; 		// P1.[4-7] are now push-pull outputs
 				}
 
 				if (ThisUsbDev.DeviceType == DEV_TYPE_JOYSTICK)
@@ -358,10 +365,14 @@ again:
 					}
 					PRINT({printstr("Joystick Params : "); printlf();})
 					PRINT({for(i=0;i!=12;i++) printx2((&p.j.pUidx)[i]); printlf();})
+					P1_DIR_PU |= 0x0F0; 		// P1.[4-7] are now push-pull outputs
 				}
 
 			}
         }
+
+		if (ledfsm<FSM_IDLE)
+			if (main_button_state && !(BUTT_L)) { ledfsm=FSM_IDLE; P1_DIR_PU &=0x0F; }
 
 
 // pollHIDdevice ?
@@ -403,7 +414,11 @@ again:
 
 						// TODO : modif depending on mouse button table...
 						i=RxBuffer[0];		// 0->Left,1->Right,2->Middle
-						if (i&1) BUTT_L=0; else BUTT_L=1;
+
+						if (i&1) {BUTT_L=0;main_button_state=0;} else {BUTT_L=1;main_button_state=1;}
+
+						if ((i&1) && (ledfsm>=FSM_IDLE)) { ledfsm=FSM_MOUSE; P1_DIR_PU |= 0x0F0; }
+						
 						if (i&2) BUTT_R=0; else BUTT_R=1;
 #ifdef HARD_V2						
 						if (i&4) BUTT_M=0; else BUTT_M=1;
