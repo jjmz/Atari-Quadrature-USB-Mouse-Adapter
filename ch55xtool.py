@@ -335,7 +335,7 @@ def __main():
             if ret is None:
                 sys.exit('Failed to verify firmware of CH55x.')
         else: 
-            if ret[0] == 'V2.31' or ret[0] == 'V2.40':
+            if ret[0] == 'V2.31' or ret[0] == 'V2.40' or ret[0] == 'V2.50':
                 ret = __write_key_ch55x_v23(dev)
                 if ret is None:
                     sys.exit('Failed to write key to CH55x.')

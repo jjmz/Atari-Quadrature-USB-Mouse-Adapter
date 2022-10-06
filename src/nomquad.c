@@ -34,7 +34,7 @@ __code __at (0x3FF8) uint8_t DevInfo[8];
 
 #include "joystick-table.h"
 
-__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.10 (" __DATE__ ")";
+__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.20 (" __DATE__ ")";
 
 
 __code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//	Mouse Params (16 bytes)
@@ -42,14 +42,14 @@ __code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//	Mouse P
 __code __at (0x3700) uint8_t DevTable[256]={  0x81,0x01, 0x08,0x20,			//	Mouse Params (16 bytes) / AMIGA
 */
                                               0x00,0x00, 0x00,0x00,			// Spare - Future Button 1/2 ?
-											  0x00,0x00, 0x00,0x00,			// Spare - Button 3 ?
+											  0x81,0x01, 0x08,0x20,			// Spare ( used when P3.1=0 & !DEBUG )
 											  0x00,0x00, 0x00,0x00,			// Spare
 // Joystick table - 12 entries, first one is default											  
 DEFAULT_JOYSTICK	\
 TWINSHOCK			\
 EIGHTBITDO_SN30		\
 THRUSTMASTER		\
-EMPTY				\
+PADCEDRIC			\
 EMPTY				\
 EMPTY				\
 EMPTY				\
@@ -120,12 +120,20 @@ SBIT(BUTT_L,0xB0,0);		// P3_0 (Left button   - DB9-6) = Fire
 SBIT(BUTT_M,0xB0,4);		// P3_4 (middle button - DB9-5)
 SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
 						    // P3_1 available, as UART TX, non-alternate setting
-#define INIT_P3 P3        |= 0x19;  \
+
+							// Pull-UP : buttons => 4,3,0 => 0x19 + TX => 0x1B
+							// OpenC   : 4,3,0 & LED (2) => 0x19+0x04 => 0x1D
+
+#define INIT_P3 P3        |= 0x1B;  \
     		    P3_MOD_OC |= 0x1D;  \
-    		    P3_DIR_PU |= 0x19; LED=0;
+    		    P3_DIR_PU |= 0x1B; LED=0;
 
 uint8_t ledcnt=10,ledfsm=0;
 uint8_t ledpwm=0;
+
+#if !DE_PRINTF
+ SBIT(ATARI_MODE,0xB0,1);
+#endif
 
 __code	uint8_t ledstatus[] ={  2,0x80,                // On
                                 16, 16+1,0x82,         // On-Off 50% Fast / Restart
@@ -332,10 +340,14 @@ again:
 					// SetBootProto();
 					
 					memset(&p,0,sizeof(p));
-					if (DevTable[0]!=0xFF)
-	 					{qmouse_amiga=DevTable[0]&0x80?1:0;
-					     p.m.sdiv=DevTable[0]&0x7F; p.m.smul=DevTable[1];
-	  					 p.m.minf=DevTable[2]; p.m.maxf=DevTable[3];}
+					i=0;
+#if !DE_PRINTF
+					if (!ATARI_MODE) i=8;
+#endif					
+					if (DevTable[0+i]!=0xFF)
+	 					{qmouse_amiga=DevTable[0+i]&0x80?1:0;
+					     p.m.sdiv=DevTable[0+i]&0x7F; p.m.smul=DevTable[1+i];
+	  					 p.m.minf=DevTable[2+i]; p.m.maxf=DevTable[3+i];}
 					else 
 	 					{p.m.sdiv=1; p.m.smul=2; p.m.minf=0; p.m.maxf=250;}
 
