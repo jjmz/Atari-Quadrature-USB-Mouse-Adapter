@@ -34,7 +34,7 @@ __code __at (0x3FF8) uint8_t DevInfo[8];
 
 #include "joystick-table.h"
 
-__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.20 (" __DATE__ ")";
+__code __at (0x3600) uint8_t FirmwareID[]="JJM Release 01.30 (" __DATE__ ")";
 
 
 __code __at (0x3700) uint8_t DevTable[256]={  0x02,0x04, 0x08,0x20,			//	Mouse Params (16 bytes)
@@ -383,7 +383,7 @@ again:
 			}
         }
 
-		if (ledfsm<FSM_IDLE)
+		if (ledfsm==FSM_MOUSE)
 			if (main_button_state && !(BUTT_L)) { ledfsm=FSM_IDLE; P1_DIR_PU &=0x0F; }
 
 
