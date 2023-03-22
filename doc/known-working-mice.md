@@ -4,13 +4,13 @@ Tested :
 
 | Name | USB IDs | Name (Linux) |
 | --- | --- | --- |
-| Cherry MC1000 | | |
+| Cherry MC1000 | 046a:b091 | Cherry GmbH |
 | Dell (M-UAR DEL7 ?) | 413c:3012 | Dell Computer Corp. Optical Wheel Mouse |
-| Logitech B100 | | |
+| Logitech B100 | 046d:c077 | Logitech, Inc,. M105 Optical Mouse |
 | Dell (M-UR69 ?) | 046d:c00c | Logitech, Inc. Optical Wheel Mouse |
 | Dell (MS111-L ?) | 046d:c05a  | Logitech, Inc. M90/M100 Optical Mouse |
 | Logitech M185 | 046d:c542 | Logitech, Inc. Wireless Receiver |
-| HAMA AMW-300 | xxxx:xxxx | HAMA wireless (Action) |
+| HAMA AMW-300 | xxxx:xxxx | HAMA wireless ("Action") |
 | ACER AMR 9200 | 3938:1197 | Wireless (From Combo pack) |
 
 Reported OK too by users :
@@ -37,7 +37,7 @@ Not Working
 
 | Name | Remark |
 | --- | --- |
-| HAMA AMW-150 | Not supported in Dell BIOS |
+| HAMA AMW-150 (wireless) | Not supported in Dell BIOS |
 | Speedlink, Model: AXON SL6302-GY (Wireless) | |
 | Microsoft Mouse, Model: 1850 (Wireless)  | |
 
