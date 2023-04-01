@@ -48,14 +48,19 @@ Not Working
 
 From the joystick table (.h file)
 
-| "Name" | USB IDS |
-| --- | --- |
-| TWINSHOCK |	0079-0006 |
-| EIGHTBITDO_SN30 | 2DC8-6001	|
-| THRUSTMASTER | 044F-B315 |
-| PAD | 0079-0011 |
-| GP1 | 0810-E501 |
-| GP3 | 0810-0003 |
-| HAMA | 12BD-A02F |
-| LOGITECH_ATK3 | 046D-C214 |
+| "Name" | USB IDS | Pic1 | Pic2 |
+| --- | --- | --- | --- |
+| TWINSHOCK (Also DragonRise Inc. Generic USB Joystick) |	0079-0006 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155408.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155344.jpg) |
+| EIGHTBITDO_SN30 (Dinput mode) | 2DC8-6001	| ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155441.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155424.jpg) |
+| THRUSTMASTER | 044F-B315 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155211.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155228.jpg) |
+| PAD | 0079-0011 | | |
+| GP1 | 0810-E501 | | |
+| GP3 | 0810-0003 | | |
+| HAMA | 12BD-A02F | | |
+| LOGITECH_ATK3 | 046D-C214 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155014.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155140.jpg) |
+| By Default (for example USBID) | xxxx-xxxx (081f-e401) | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155524.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155502.jpg) |
+
+Best Value :
+
+
 
