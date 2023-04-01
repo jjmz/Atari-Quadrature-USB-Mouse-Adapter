@@ -53,14 +53,14 @@ From the joystick table (.h file)
 | TWINSHOCK (Also DragonRise Inc. Generic USB Joystick) |	0079-0006 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155408.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155344.jpg) |
 | EIGHTBITDO_SN30 (Dinput mode) | 2DC8-6001	| ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155441.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155424.jpg) |
 | THRUSTMASTER | 044F-B315 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155211.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155228.jpg) |
-| PAD | 0079-0011 | | |
+| PAD | 0079-0011 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/e7f699616039195bb0048aed280aa515d3ba7d21/doc/image001.jpg) | |
 | GP1 | 0810-E501 | | |
 | GP3 | 0810-0003 | | |
 | HAMA | 12BD-A02F | | |
 | LOGITECH_ATK3 | 046D-C214 | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155014.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155140.jpg) |
 | By Default (for example USBID) | xxxx-xxxx (081f-e401) | ![Pic1](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155524.jpg) | ![Pic2](https://github.com/jjmz/Atari-Quadrature-USB-Mouse-Adapter/blob/cbb520e717557a655bf1fcab23c06d08b14aef88/doc/IMG_20230401_155502.jpg) |
 
-Best Value :
+Best Value : https://www.gotronic.fr/art-manette-pour-superpi-usb-gamepad-29672.htm
 
 
 
