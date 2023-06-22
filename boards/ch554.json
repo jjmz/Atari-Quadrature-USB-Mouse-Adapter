@@ -14,7 +14,7 @@
     "maximum_size": 16384,
     "protocol": "custom",
     "protocols": [
-      "custom"
+      "custom" , "ch55x"
     ]
   },
   "name": "Generic CH554 Board",

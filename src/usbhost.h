@@ -16,7 +16,8 @@
 #define ROOT_DEV_SUCCESS     3
 #define DEV_TYPE_KEYBOARD   ( USB_DEV_CLASS_HID | 0x20 )
 #define DEV_TYPE_MOUSE      ( USB_DEV_CLASS_HID | 0x30 )
-#define DEV_TYPE_JOYSTICK   ( USB_DEV_CLASS_HID | 0x40 )
+#define DEV_TYPE_MOUSE2     ( USB_DEV_CLASS_HID | 0x40 )
+#define DEV_TYPE_JOYSTICK   ( USB_DEV_CLASS_HID | 0x50 )
 #define DEF_AOA_DEVICE       0xF0
 
 
@@ -77,7 +78,7 @@ typedef struct
 } _DevOnHubPort;                      // 假定:不超过1个外部HUB,每个外部HUB不超过HUB_MAX_PORTS个端口(多了不管)
 
 extern __xdata _RootHubDev ThisUsbDev;
-extern __xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];// 假定:不超过1个外部HUB,每个外部HUB不超过HUB_MAX_PORTS个端口(多了不管)
+//extern __xdata _DevOnHubPort DevOnHubPort[HUB_MAX_PORTS];// 假定:不超过1个外部HUB,每个外部HUB不超过HUB_MAX_PORTS个端口(多了不管)
 extern uint8_t Set_Port;
 #endif
 

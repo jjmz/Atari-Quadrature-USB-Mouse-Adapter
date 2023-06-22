@@ -187,8 +187,8 @@ uint8_t WaitUSB_Interrupt( void )
 *******************************************************************************/
 uint8_t   USBHostTransact( uint8_t endp_pid, uint8_t tog, uint16_t timeout )
 {
-//	uint8_t	TransRetry;
-#define	TransRetry	UEP0_T_LEN	                                               // Save memory
+	uint8_t	TransRetry;
+//#define	TransRetry	UEP0_T_LEN	                                               // Save memory
 	uint8_t	s, r;
 	uint16_t	i;
 	UH_RX_CTRL = UH_TX_CTRL = tog;
@@ -657,6 +657,7 @@ USBDevEnum:
 #if DE_PRINTF		
     printstr( "GetDevDescr: " );
 #endif
+    mDelaymS(t);
     s = CtrlGetDeviceDescr( );                                               // Get device descriptor
     if ( s == ERR_SUCCESS )
     {
@@ -710,7 +711,7 @@ USBDevEnum:
 #if DE_PRINTF												
                         printstr( "GetHIDReport: " );
 #endif			
-                        for(dv_cls=0;dv_cls<ifc;dv_cls++)
+                        for(dv_cls=0;dv_cls<ifc;dv_cls++)                   // ifc = nbinterfaces
                         {											
 							s = CtrlGetHIDDeviceReport(dv_cls);                    //获取报表描述符
 							if(s == ERR_SUCCESS)
@@ -734,22 +735,23 @@ USBDevEnum:
                             if(ifc > 1)
                             {
 #if DE_PRINTF														
-								printstr( "USB_DEV_CLASS_HID Ready\n" );
+								printstr( "USB_DEV_CLASS_HID Ready\r\n" );
 #endif																
 								ThisUsbDev.DeviceType = USB_DEV_CLASS_HID;//复合HID设备		
                                 if ( if_cls2 == 2 )
-                                    { ThisUsbDev.DeviceType = DEV_TYPE_MOUSE;
-                                      ThisUsbDev.GpVar[0]=ThisUsbDev.GpVar[1];
+                                    { ThisUsbDev.DeviceType = DEV_TYPE_MOUSE2;
+                                      //ThisUsbDev.GpVar[0]=ThisUsbDev.GpVar[1];
+
+                                      SetBootProto(0);      // Keyboard proto
                                       SetBootProto(1);
-                                      SetBootProto(0);							// Dell BIOS calls this with ifc set to 0...
 #if DE_PRINTF						  
-								      printstr( "MOUSE Interface : 2\n" );
+								      printstr( "MOUSE Interface : 2\r\n" );
 #endif                                      
                                     }													
                                       
                             }																												
 #if DE_PRINTF														
-                            printstr( "USB-Keyboard Ready\n" );
+                            printstr( "USB-Keyboard Ready\r\n" );
 #endif													
                             SetUsbSpeed( 1 );                            // 默认为全速
 
@@ -764,7 +766,7 @@ USBDevEnum:
 #if DE_PRINTF														
 								printstr( "USB_DEV_CLASS_HID Ready\n" );
 #endif																
-								ThisUsbDev.DeviceType = USB_DEV_CLASS_HID;//复合HID设备															
+								//ThisUsbDev.DeviceType = USB_DEV_CLASS_HID;//复合HID设备															
                             }
                             SetBootProto(0);															
 #if DE_PRINTF													
@@ -877,15 +879,54 @@ uint16_t  SearchTypeDevice( uint8_t type )
 
 uint8_t SetBootProto(uint8_t intf)
 {
-    uint8_t tmp[]= {0x21,0x0b,0x00,0x00,0x00,0x00,0x00,0x00};
+    uint8_t get[]= {0xA1,0x03,0x00,0x00,0x00,0x00,0x01,0x00};
+    uint8_t set[]= {0x21,0x0b,0x00,0x00,0x00,0x00,0x00,0x00};
+    uint8_t report[]= {0x21,0x09,0x00,0x02,0x00,0x00,0x01,0x00};
+
     uint8_t len,s;
 
-	for ( s = 0; s != sizeof( tmp ); s ++ )
+	for ( s = 0; s != sizeof( get ); s ++ )
 	{
-		((__xdata uint8_t *)pSetupReq)[ s ] = tmp[s];
+		((__xdata uint8_t *)pSetupReq)[ s ] = get[s];
 	}
     ((__xdata uint8_t *)pSetupReq)[ 4 ]=intf;
-    s = HostCtrlTransfer( Com_Buffer, &len );                                     // 执行控制传输
+    s = HostCtrlTransfer( Com_Buffer, &len );                                    
+
+    if ( s != ERR_SUCCESS )
+    {
+        return( s );
+    }
+
+#if DE_PRINTF						
+						printstr("GetProto :"); printx2(Com_Buffer[0]); printlf();
+#endif						
+
+    if (Com_Buffer[0]!=0) {
+	for ( s = 0; s != sizeof( set ); s ++ )
+	{
+		((__xdata uint8_t *)pSetupReq)[ s ] = set[s];
+	}
+    ((__xdata uint8_t *)pSetupReq)[ 4 ]=intf;
+    s = HostCtrlTransfer( Com_Buffer, &len );                               
+#if DE_PRINTF						
+						printstr("SetProto : Boot"); printlf();
+#endif						
+    }
+
+#if 0
+    if ( s != ERR_SUCCESS )
+    {
+        return( s );
+    }
+
+    len=1; Com_Buffer[0]=0;
+	for ( s = 0; s != sizeof( report ); s ++ )
+	{
+		((__xdata uint8_t *)pSetupReq)[ s ] = report[s];
+	}
+    s = HostCtrlTransfer( Com_Buffer, &len );  
+#endif
+
     if ( s != ERR_SUCCESS )
     {
         return( s );

@@ -50,10 +50,10 @@ TWINSHOCK			\
 EIGHTBITDO_SN30		\
 THRUSTMASTER		\
 PADCEDRIC			\
-EMPTY				\
-EMPTY				\
-EMPTY				\
-EMPTY				\
+JOHN_GP1			\
+JOHN_GP3			\
+JOHN_HAMA			\
+LOGITECH_ATK3    	\
 EMPTY				\
 EMPTY				\
 EMPTY				
@@ -124,8 +124,12 @@ SBIT(LED,0xB0,2);		    // P3_2 (LED, active low)
 							// Pull-UP : buttons => 4,3,0 => 0x19 + TX => 0x1B
 							// OpenC   : 4,3,0 & LED (2) => 0x19+0x04 => 0x1D
 
+//#define INIT_P3 P3        |= 0x1B;  \
+//    		    P3_MOD_OC |= 0x1D;  \
+//    		    P3_DIR_PU |= 0x1B; LED=0;
+
 #define INIT_P3 P3        |= 0x1B;  \
-    		    P3_MOD_OC |= 0x1D;  \
+    		    P3_MOD_OC |= 0x15;  \
     		    P3_DIR_PU |= 0x1B; LED=0;
 
 uint8_t ledcnt=10,ledfsm=0;
@@ -335,7 +339,7 @@ again:
             }
 			else
 			{
-				if (ThisUsbDev.DeviceType == DEV_TYPE_MOUSE)
+				if ( (ThisUsbDev.DeviceType == DEV_TYPE_MOUSE)||(ThisUsbDev.DeviceType == DEV_TYPE_MOUSE2) )
 				{
 					// SetBootProto();
 					
@@ -403,22 +407,37 @@ again:
 			 };
 #endif
 
-		  loc = SearchTypeDevice( DEV_TYPE_MOUSE );                        
-		  if ( loc != 0xFFFF ){                                        
-
+		  loc = SearchTypeDevice( DEV_TYPE_MOUSE ); 
+		  if (loc == 0xFFFF)  loc = SearchTypeDevice( DEV_TYPE_MOUSE2 );                      
+		  if ( loc != 0xFFFF )
+		  {                                        
 			//printstr( "Query Mouse @");printhex4(loc);printlf();
 
 			i = (uint8_t)( loc >> 8 );
 			len = (uint8_t)loc;
 			SelectHubPort(); 
-			endp = /*len ? DevOnHubPort[len-1].GpVar[0] : */ ThisUsbDev.GpVar[0];     
+			i=0;
+
+			if (ThisUsbDev.DeviceType == DEV_TYPE_MOUSE2)
+			{ endp = ThisUsbDev.GpVar[0];     
+			  if ( endp & USB_ENDP_ADDR_MASK ){                               
+				s = USBHostTransact( USB_PID_IN << 4 | endp & 0x7F, endp & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
+
+				if ( s == ERR_SUCCESS ){
+					endp ^= 0x80;                                         
+					ThisUsbDev.GpVar[0] = endp;
+				}
+			 }
+			 i=1;
+			}
+
+			endp = ThisUsbDev.GpVar[i];     
 			if ( endp & USB_ENDP_ADDR_MASK ){                               
 				s = USBHostTransact( USB_PID_IN << 4 | endp & 0x7F, endp & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
 
 				if ( s == ERR_SUCCESS ){
 					endp ^= 0x80;                                         
-					// if ( len ) DevOnHubPort[len-1].GpVar[0] = endp;            
-					/*else*/ ThisUsbDev.GpVar[0] = endp;
+					ThisUsbDev.GpVar[i] = endp;
 					len = USB_RX_LEN;                                 
 					if ( len ) {
 						PRINT(printstr("RX: ");)

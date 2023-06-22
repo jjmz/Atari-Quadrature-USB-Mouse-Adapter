@@ -16,6 +16,8 @@
 
 void	CfgFsys( );                       // CH554 clock selection and configuration
 
+
+#pragma callee_saves mDelayuS,mDelaymS
 void mDelayuS (uint16_t n); // Delay in units of uS
 void mDelaymS (uint16_t n); // Delay in mS
 
