@@ -426,6 +426,10 @@ uint8_t CtrlGetConfigDescr( void )
     }
 
     len = ( (PXUSB_CFG_DESCR)Com_Buffer ) -> wTotalLengthL;
+    if ( len > COM_BUF_SIZE )
+    {
+        return( ERR_USB_BUF_OVER );
+    }
     CopySetupReqPkg( SetupGetCfgDescr );
     pSetupReq -> wLengthL = len;                                                 // 完整配置描述符的总长度
     s = HostCtrlTransfer( Com_Buffer, (uint8_t *)&len );                                // 执行控制传输
@@ -524,6 +528,7 @@ uint8_t   CtrlGetHIDDeviceReport( uint8_t infc )
 
 	CopySetupReqPkg( SetupGetHIDDevReport );
 	TxBuffer[4] = infc;
+    TxBuffer[6] = COM_BUF_SIZE;
     s = HostCtrlTransfer( Com_Buffer, (uint8_t *)&len );                                    // 执行控制传输
     if ( s != ERR_SUCCESS )
     {
@@ -967,4 +972,3 @@ void  InitUSB_Host( void )
     USB_INT_EN = bUIE_TRANSFER | bUIE_DETECT;
 //  IE_USB = 1;                                                                  // 查询方式
 }
-
